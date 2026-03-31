@@ -1,7 +1,4 @@
 export class AnalysisResponseDTO {
-  score(score: any) {
-      throw new Error('Method not implemented.');
-  }
   private status: string;
   private response: string;
 

@@ -4,12 +4,6 @@ import { AnalysisManagementPersistenceInterface } from './interfaces/analysisman
 import { AnalysisManagementInfrastructureInterface } from './interfaces/analysismanagementinfrastructure.interface';
 import { RequestDTO } from './dto/request.dto';
 
-jest.mock('@octokit/rest', () => ({
-  Octokit: jest.fn().mockImplementation(() => ({
-    repos: { get: jest.fn(), getBranch: jest.fn() },
-  })),
-}));
-
 describe('AnalysisManagementService', () => {
   let service: AnalysisManagementService;
 
@@ -21,7 +15,6 @@ describe('AnalysisManagementService', () => {
 
   const mockInfra = {
     checkLastCommit: jest.fn(), 
-    isLast: jest.fn(),
     startAnalysis: jest.fn(),
   };
 
@@ -41,7 +34,6 @@ describe('AnalysisManagementService', () => {
     }).compile();
 
     service = module.get<AnalysisManagementService>(AnalysisManagementService);
-    
     jest.resetAllMocks();
   });
 
@@ -49,11 +41,10 @@ describe('AnalysisManagementService', () => {
     const mockRequest = new RequestDTO();
     
     mockPersistence.check.mockResolvedValue(true);
-    mockPersistence.getAnalysis.mockResolvedValue({ score: 95 });
+    mockPersistence.getAnalysis.mockResolvedValue({ status: 'completed' });
 
-    const result = await service.startAnalysis(mockRequest);
+    await service.startAnalysis(mockRequest);
 
-    expect(result.score).toBe(95);
     expect(mockPersistence.getAnalysis).toHaveBeenCalled();
   });
 
@@ -61,9 +52,10 @@ describe('AnalysisManagementService', () => {
     const mockRequest = new RequestDTO();
     mockRequest.setCommitId('new-sha-456');
 
-    mockPersistence.check.mockResolvedValue(false); // Matches Service call
+    mockPersistence.check.mockResolvedValue(false);
+    mockInfra.checkLastCommit.mockResolvedValue(true);
     
-    const mockResponse = { status: 'newly_analyzed', score: 100 };
+    const mockResponse = { status: 'newly_analyzed' };
     mockInfra.startAnalysis.mockResolvedValue(mockResponse);
     mockPersistence.saveAnalysis.mockResolvedValue(undefined);
 
