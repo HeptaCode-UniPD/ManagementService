@@ -9,7 +9,7 @@ import { AnalysisSchema } from '../persistence/analysis.schema';
 
 @Module({
   imports: [
-    MongooseModule.forRoot(process.env.MONGO_URI || 'boh?', {
+    MongooseModule.forRoot(process.env.MONGO_URI!, {
       connectionFactory: (connection) => {
         console.log('MongoDB Connected to:', connection.name);
         return connection;

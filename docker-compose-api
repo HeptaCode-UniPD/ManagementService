@@ -1,0 +1,20 @@
+
+services:
+  api:
+    build: .
+    container_name: analysismanagement-service
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+    ports:
+      - "4000:4000"
+    command: npm run start:dev
+
+  mongo:
+    image: mongo:6
+    container_name: mongo-dev
+    ports:
+      - "27018:27017"
+    volumes:
+      - ./mongo-init:/docker-entrypoint-initdb.d
