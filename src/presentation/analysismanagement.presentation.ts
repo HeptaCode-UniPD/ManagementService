@@ -11,9 +11,7 @@ export class AnalysisManagementPresentation {
 
   @Post('request')
   @HttpCode(HttpStatus.OK)
-  async requestAnalysis(@Body() request: RequestDTO): Promise<AnalysisResponseDTO> {
-    
-    const repoUrl = request.getRepoUrl();
+  async requestAnalysis(@Body() repoUrl: string): Promise<AnalysisResponseDTO> {
     
     console.log(`[Presentation] Received request for Repo: ${repoUrl}`);
 
