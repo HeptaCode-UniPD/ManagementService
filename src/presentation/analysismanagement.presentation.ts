@@ -11,12 +11,9 @@ export class AnalysisManagementPresentation {
 
   @Post('request')
   @HttpCode(HttpStatus.OK)
-  async requestAnalysis(@Body() repoUrl: string): Promise<AnalysisResponseDTO> {
-    
-    console.log(`[Presentation] Received request for Repo: ${repoUrl}`);
-
-    const response = await this.analysisService.startAnalysis(repoUrl);
-
-    return response;
+  async requestAnalysis(@Body('url') repoUrl: string): Promise<AnalysisResponseDTO> {
+      console.log(`[Presentation] Received request for Repo: ${repoUrl}`);
+      const response = await this.analysisService.startAnalysis(repoUrl);
+      return response;
   }
 }

@@ -1,0 +1,15 @@
+services:
+  analysismanagement-service:
+    build: .
+    container_name: analysismanagement-test
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: mongodb://mongo:27017/test-db
+    command: npm test
+
+  mongo:
+    image: mongo:6
+    container_name: mongo-analysismanagement-test
+    ports:
+      - "27017:27017"
