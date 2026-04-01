@@ -22,6 +22,9 @@ export class AnalysisManagementInfrastructure extends AnalysisManagementInfrastr
   }
 
   async startAnalysis(repoUrl: string, commitId: string): Promise<AnalysisResponseDTO> {
-    throw new Error('Method not Implemented');
+      return {
+        status: 'mock',
+        response: `Analisi mock per commit ${commitId}. Il microservizio LLM non è ancora implementato.`
+      };
   }
 }

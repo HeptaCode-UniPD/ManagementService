@@ -25,7 +25,7 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
     console.log(`[Service] New commit ${latestCommitId} detected. Starting analysis...`);
     const newAnalysis = await this.infrastructure.startAnalysis(repoUrl, latestCommitId);
 
-    await this.database.saveAnalysis(latestCommitId, newAnalysis);
+    await this.database.saveAnalysis(latestCommitId, newAnalysis, repoUrl);
 
     return newAnalysis;
   }

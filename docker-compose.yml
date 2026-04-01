@@ -12,4 +12,4 @@ services:
     image: mongo:6
     container_name: mongo-analysismanagement-test
     ports:
-      - "27017:27017"
+      - "27018:27017"

@@ -2,16 +2,16 @@ services:
   analysismanagement-service:
     build: .
     container_name: am-service
-    depends_on:
-      - mongo
+    # depends_on:
+    #   - mongo
     env_file:
       - .env
     ports:
       - "4000:4000"
     command: npm run start:prod
 
-  mongo:
-    image: mongo:6
-    container_name: mongo-analysismanagement-dev
-    ports:
-      - "27017:27017"
+  # mongo:
+  #   image: mongo:6
+  #   container_name: mongo-analysismanagement-dev
+  #   ports:
+  #     - "27017:27017"

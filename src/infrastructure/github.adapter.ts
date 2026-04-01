@@ -1,24 +1,26 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { Octokit } from '@octokit/rest';
+import type { Octokit } from '@octokit/rest';
 
 @Injectable()
 export class GithubAdapter {
-  private readonly octokit: Octokit;
+  private octokit: Octokit;
 
-  constructor() {
-    this.octokit = new Octokit();
+  private async getOctokit(): Promise<Octokit> {
+    if (!this.octokit) {
+      const { Octokit } = await import('@octokit/rest');
+      this.octokit = new Octokit();
+    }
+    return this.octokit;
   }
 
   async getLatestCommit(repoUrl: string): Promise<string> {
+    const octokit = await this.getOctokit();
     try {
       const { owner, repo } = this.parseRepoUrl(repoUrl);
 
-      const { data: repoData } = await this.octokit.repos.get({
-        owner,
-        repo,
-      });
+      const { data: repoData } = await octokit.repos.get({ owner, repo });
 
-      const { data: branchData } = await this.octokit.repos.getBranch({
+      const { data: branchData } = await octokit.repos.getBranch({
         owner,
         repo,
         branch: repoData.default_branch,
@@ -38,7 +40,7 @@ export class GithubAdapter {
       const [owner, repo] = path.split('/').filter(Boolean);
 
       if (!owner || !repo) throw new Error();
-      
+
       return { owner, repo };
     } catch (e) {
       throw new HttpException('Invalid GitHub Repository URL', HttpStatus.BAD_REQUEST);
@@ -51,9 +53,6 @@ export class GithubAdapter {
 
     console.error(`[GithubAdapter] Error: ${message}`);
 
-    throw new HttpException(
-      `GitHub API Error: ${message}`,
-      status,
-    );
+    throw new HttpException(`GitHub API Error: ${message}`, status);
   }
 }

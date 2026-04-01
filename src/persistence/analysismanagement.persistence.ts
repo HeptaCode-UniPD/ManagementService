@@ -23,13 +23,14 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
     return record.analysis_data as AnalysisResponseDTO;
   }
 
-  async saveAnalysis(commitId: string, analysis: AnalysisResponseDTO): Promise<void> {
-    const newRecord = new this.analysisModel({
-      commit_id: commitId,
-      analysis_data: analysis, // Storing the whole DTO
-      updatedAt: new Date(),
-    });
+  async saveAnalysis(commitId: string, analysis: AnalysisResponseDTO, repoUrl: string): Promise<void> {
+      const newRecord = new this.analysisModel({
+        commit_id: commitId,
+        repository_url: repoUrl,
+        analysis_data: analysis,
+        updatedAt: new Date(),
+      });
 
-    await newRecord.save();
+      await newRecord.save();
   }
 }
