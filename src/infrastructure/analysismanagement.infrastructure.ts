@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { AnalysisManagementInfrastructureInterface } from '../domain/interfaces/analysismanagementinfrastructure.interface';
 import { GithubAdapter } from './github.adapter';
-import { RequestDTO } from '../domain/dto/request.dto';
 import { AnalysisResponseDTO } from '../domain/dto/analysisresponse.dto';
+import { RequestDTO } from '../domain/dto/request.dto';
 
 @Injectable()
 export class AnalysisManagementInfrastructure extends AnalysisManagementInfrastructureInterface {
@@ -12,24 +12,16 @@ export class AnalysisManagementInfrastructure extends AnalysisManagementInfrastr
     super();
   }
 
-  async checkLastCommit(request: RequestDTO): Promise<boolean> {
-    console.log(`[Infrastructure] Checking if ${request.getCommitId()} is the latest commit...`);
-
-    const latestCommitSha = await this.githubAdapter.getLatestCommit(
-      request.getRepoUrl(),
-      request.getUserToken()
-    );
-
-    const isLatest = request.getCommitId() === latestCommitSha;
-
-    if (!isLatest) {
-      console.warn(`[Infra] Validation failed: Request commit is NOT the latest.`);
-    }
-
-    return isLatest;
+  async getLatestCommitSha(repoUrl: string): Promise<string> {
+    console.log(`[Infrastructure] Fetching latest commit SHA for: ${repoUrl}`);
+    
+    const latestSha = await this.githubAdapter.getLatestCommit(repoUrl);
+    
+    console.log(`[Infrastructure] Current GitHub SHA: ${latestSha}`);
+    return latestSha;
   }
 
-  async startAnalysis(request: RequestDTO): Promise<AnalysisResponseDTO> {
-    throw new Error('Method not implemented.');
+  async startAnalysis(repoUrl: string, commitId: string): Promise<AnalysisResponseDTO> {
+    throw new Error('Method not Implemented');
   }
 }

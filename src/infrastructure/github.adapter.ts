@@ -3,54 +3,57 @@ import { Octokit } from '@octokit/rest';
 
 @Injectable()
 export class GithubAdapter {
-  
-  async getLatestCommit(repoUrl: string, token: string): Promise<string> {
+  private readonly octokit: Octokit;
+
+  constructor() {
+    this.octokit = new Octokit();
+  }
+
+  async getLatestCommit(repoUrl: string): Promise<string> {
     try {
       const { owner, repo } = this.parseRepoUrl(repoUrl);
 
-      const octokit = new Octokit({ auth: token });
-
-      const { data: repoData } = await octokit.repos.get({
+      const { data: repoData } = await this.octokit.repos.get({
         owner,
         repo,
       });
 
-      const defaultBranch = repoData.default_branch;
-
-      const { data: branchData } = await octokit.repos.getBranch({
+      const { data: branchData } = await this.octokit.repos.getBranch({
         owner,
         repo,
-        branch: defaultBranch,
+        branch: repoData.default_branch,
       });
 
       return branchData.commit.sha;
 
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error(`[GithubAdapter] Error fetching commit: ${error.message}`);
-        
-        const status = (error as any).status || HttpStatus.BAD_GATEWAY;
-
-        throw new HttpException(
-        `GitHub API Error: ${error.message}`,
-        status,
-        );
-      }
-
-      console.error('[GithubAdapter] An unexpected error occurred', error);
-      throw new HttpException(
-        'An unknown error occurred while communicating with GitHub',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    } catch (error: any) {
+      this.handleError(error);
     }
   }
+
   private parseRepoUrl(url: string): { owner: string; repo: string } {
     try {
-      const path = new URL(url).pathname;
-      const parts = path.split('/').filter(Boolean);
-      return { owner: parts[0], repo: parts[1] };
+      const cleanUrl = url.startsWith('http') ? url : `https://github.com/${url}`;
+      const path = new URL(cleanUrl).pathname;
+      const [owner, repo] = path.split('/').filter(Boolean);
+
+      if (!owner || !repo) throw new Error();
+      
+      return { owner, repo };
     } catch (e) {
       throw new HttpException('Invalid GitHub Repository URL', HttpStatus.BAD_REQUEST);
     }
+  }
+
+  private handleError(error: any): never {
+    const message = error.message || 'Unknown GitHub error';
+    const status = error.status || HttpStatus.BAD_GATEWAY;
+
+    console.error(`[GithubAdapter] Error: ${message}`);
+
+    throw new HttpException(
+      `GitHub API Error: ${message}`,
+      status,
+    );
   }
 }

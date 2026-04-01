@@ -2,19 +2,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AnalysisManagementService } from './analysismanagement.service';
 import { AnalysisManagementPersistenceInterface } from './interfaces/analysismanagementpersistence.interface';
 import { AnalysisManagementInfrastructureInterface } from './interfaces/analysismanagementinfrastructure.interface';
-import { RequestDTO } from './dto/request.dto';
 
 describe('AnalysisManagementService', () => {
   let service: AnalysisManagementService;
 
   const mockPersistence = {
-    check: jest.fn(),
-    getAnalysis: jest.fn(),
+    getAnalysisByCommit: jest.fn(),
     saveAnalysis: jest.fn(),
   };
 
   const mockInfra = {
-    checkLastCommit: jest.fn(), 
+    getLatestCommitSha: jest.fn(), 
     startAnalysis: jest.fn(),
   };
 
@@ -38,30 +36,40 @@ describe('AnalysisManagementService', () => {
   });
 
   it('should return cached analysis if it already exists in DB', async () => {
-    const mockRequest = new RequestDTO();
+    const repoUrl = 'https://github.com/owner/repo';
     
-    mockPersistence.check.mockResolvedValue(true);
-    mockPersistence.getAnalysis.mockResolvedValue({ status: 'completed' });
+    mockInfra.getLatestCommitSha.mockResolvedValue('sha-123');
+    mockPersistence.getAnalysisByCommit.mockResolvedValue({ 
+      status: 'completed', 
+      response: 'Cache found' 
+    });
 
-    await service.startAnalysis(mockRequest);
+    const result = await service.startAnalysis(repoUrl);
 
-    expect(mockPersistence.getAnalysis).toHaveBeenCalled();
+    expect(mockInfra.getLatestCommitSha).toHaveBeenCalledWith(repoUrl);
+    expect(mockPersistence.getAnalysisByCommit).toHaveBeenCalledWith('sha-123');
+    expect(result.status).toBe('completed');
+    
+    expect(mockInfra.startAnalysis).not.toHaveBeenCalled();
   });
 
-  it('should start a new analysis if NOT in DB and IS the latest commit', async () => {
-    const mockRequest = new RequestDTO();
-    mockRequest.setCommitId('new-sha-456');
+  it('should start a new analysis if NOT in DB', async () => {
+    const repoUrl = 'https://github.com/owner/repo';
 
-    mockPersistence.check.mockResolvedValue(false);
-    mockInfra.checkLastCommit.mockResolvedValue(true);
+    mockInfra.getLatestCommitSha.mockResolvedValue('new-sha-456');
+    mockPersistence.getAnalysisByCommit.mockResolvedValue(null);
     
-    const mockResponse = { status: 'newly_analyzed' };
-    mockInfra.startAnalysis.mockResolvedValue(mockResponse);
+    const mockNewAnalysis = { 
+        status: 'processing', 
+        response: 'Analysis started' 
+    };
+    mockInfra.startAnalysis.mockResolvedValue(mockNewAnalysis);
     mockPersistence.saveAnalysis.mockResolvedValue(undefined);
 
-    await service.startAnalysis(mockRequest);
+    const result = await service.startAnalysis(repoUrl);
 
-    expect(mockInfra.startAnalysis).toHaveBeenCalled();
-    expect(mockPersistence.saveAnalysis).toHaveBeenCalled();
+    expect(mockInfra.startAnalysis).toHaveBeenCalledWith(repoUrl, 'new-sha-456');
+    expect(mockPersistence.saveAnalysis).toHaveBeenCalledWith('new-sha-456', mockNewAnalysis);
+    expect(result.status).toBe('processing');
   });
 });
