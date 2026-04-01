@@ -1,7 +1,6 @@
 node_modules
 dist
 build
-Dockerfile
 .env
 .git
 docker-compose*.yml
