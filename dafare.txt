@@ -1,0 +1,3 @@
+fix getbycommit
+polling GET frontend
+throw error se analisi è già presente
