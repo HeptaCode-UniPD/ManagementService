@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, Query } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, Query, Param } from '@nestjs/common';
 import { RequestDTO } from '../domain/dto/request.dto';
 import { AnalysisResponseDTO } from '../domain/dto/analysisresponse.dto';
 import { AnalysisManagementServiceInterface } from '../domain/interfaces/analysismanagementservice.interface';
@@ -15,9 +15,14 @@ export class AnalysisManagementPresentation implements AnalysisManagement{
   @Post('request')
   @HttpCode(HttpStatus.OK)
   async requestAnalysis(@Body() request: RequestDTO): Promise<AnalysisResponseDTO> {
-      console.log(`[Presentation] Received request for Repo: ${request.repoUrl}`);
-      const response = await this.analysisService.startAnalysis(request);
-      return response;
+    console.log('DEBUG request body:', request);
+    return await this.analysisService.startAnalysis(request);
+  }
+
+  @Get('status/:jobId')
+  @HttpCode(HttpStatus.OK)
+  async getStatus(@Param('jobId') jobId: string): Promise<AnalysisResponseDTO> {
+    return await this.analysisService.getAnalysisStatus(jobId);
   }
 
   @Get('view')

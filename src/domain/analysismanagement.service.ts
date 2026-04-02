@@ -17,25 +17,35 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
 
   async startAnalysis(request: RequestDTO): Promise<AnalysisResponseDTO> {
     const latestCommitId = await this.infrastructure.getLatestCommitSha(request.repoUrl);
-
     const cachedAnalysis = await this.database.getAnalysisByCommit(latestCommitId);
 
-  if (cachedAnalysis && cachedAnalysis.analysisDetails!.length > 0) {
-    this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già presente.`);
-    return cachedAnalysis;
-  }
-    this.logger.log(`[Service] Avvio nuova analisi per il commit ${latestCommitId}...`);
+    console.log('DEBUG cachedAnalysis:', JSON.stringify(cachedAnalysis, null, 2));
 
+    // Analisi già pronta e completa
+    if (cachedAnalysis && cachedAnalysis.analysisDetails) {
+      this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già presente.`);
+      return { status: 'done', repoUrl: request.repoUrl, commitId: latestCommitId };
+    }
+
+    // Analisi già in corso
+    if (cachedAnalysis && !cachedAnalysis.analysisDetails) {
+      this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già in corso.`);
+      return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: latestCommitId };
+    }
+
+    // Nuova analisi
+    this.logger.log(`[Service] Avvio nuova analisi per il commit ${latestCommitId}...`);
     const initialPayload: AnalysisResponseDTO = {
+      status: 'processing',
       repoUrl: request.repoUrl,
-      analysisDetails: []
+      commitId: latestCommitId,
+      analysisDetails: [],
     };
 
     await this.database.saveAnalysis(initialPayload);
-
     await this.infrastructure.startAnalysis(request, latestCommitId);
 
-    return initialPayload;
+    return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: latestCommitId };
   }
 
   async handleWebhookResponse(payload: AnalysisResponseDTO): Promise<void> {
@@ -50,12 +60,19 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
     await this.database.saveAnalysis(payload);
   }
 
-  async getAnalysisStatus(jobId: string): Promise<AnalysisResponseDTO | null> {
-    this.logger.log(`[Service] Controllo stato analisi per commit: ${jobId}`);
-    
+  async getAnalysisStatus(jobId: string): Promise<AnalysisResponseDTO> {
     const analysis = await this.database.getAnalysisByCommit(jobId);
-    
-    return analysis; 
+
+    if (!analysis) {
+      return { status: 'error', repoUrl: '' };
+    }
+
+    const isDone = analysis.analysisDetails && analysis.analysisDetails.length > 0;
+    return {
+      status: isDone ? 'done' : 'processing',
+      repoUrl: analysis.repoUrl,
+      commitId: jobId,
+    };
   }
 
   async getLastAnalysis(repoUrl: string): Promise<AnalysisDTO | null> {

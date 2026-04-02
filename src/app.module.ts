@@ -10,9 +10,11 @@ import { AnalysisManagementPersistenceInterface } from './domain/interfaces/anal
 import { AnalysisManagementInfrastructureInterface } from './domain/interfaces/analysismanagementinfrastructure.interface';
 import { AnalysisManagementPresentation } from './presentation/analysismanagement.presentation';
 import { AnalysisManagementServiceInterface } from './domain/interfaces/analysismanagementservice.interface';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
+    HttpModule,
     MongooseModule.forRoot(process.env.MONGO_URI!, {
       connectionFactory: (connection) => {
         console.log('MongoDB Connected to:', connection.name);
