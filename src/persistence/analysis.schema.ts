@@ -1,19 +1,42 @@
 import { Schema } from 'mongoose';
 
 export const AnalysisSchema = new Schema({
-  commit_id: { type: String, required: true, index: true },
+  commit_id: { 
+    type: String, 
+    required: true, 
+    index: true, 
+    unique: true 
+  },
   
-  repository_url: { type: String, required: true },
-  
-  user_token: { type: String, required: false },
+  repository_url: { 
+    type: String, 
+    required: true,
+    index: true 
+  },
+  user_token: { 
+    type: String, 
+    required: false 
+  },
 
-  analysis_data: { type: Schema.Types.Mixed, required: true },
+  status: {
+    type: String,
+    enum: ['pending', 'completed', 'failed'],
+    default: 'pending',
+    required: true
+  },
 
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  analysis_data: { 
+    type: Schema.Types.Mixed, 
+    required: true 
+  },
+
+  error_message: {
+    type: String,
+    required: false
+  }
 }, {
   timestamps: true,
   versionKey: false 
 });
 
-AnalysisSchema.index({ commit_id: 1 }, { unique: true });
+AnalysisSchema.index({ repository_url: 1, commit_id: 1 });

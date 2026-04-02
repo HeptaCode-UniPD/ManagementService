@@ -1,17 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AnalysisManagementPersistenceInterface } from '../domain/interfaces/analysismanagementpersistence.interface';
 import { AnalysisResponseDTO } from '../domain/dto/analysisresponse.dto';
-import { RequestDTO } from '../domain/dto/request.dto';
+import { AnalysisDTO } from '../domain/dto/analysis.dto';
 
 @Injectable()
 export class AnalysisManagementPersistence extends AnalysisManagementPersistenceInterface {
+  
+  private readonly logger = new Logger(AnalysisManagementPersistence.name);
+
   constructor(
     @InjectModel('Analysis') private readonly analysisModel: Model<any>,
   ) {
     super();
   }
+
   async getAnalysisByCommit(commitId: string): Promise<AnalysisResponseDTO | null> {
     const record = await this.analysisModel
       .findOne({ commit_id: commitId })
@@ -23,14 +27,46 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
     return record.analysis_data as AnalysisResponseDTO;
   }
 
-  async saveAnalysis(commitId: string, analysis: AnalysisResponseDTO, repoUrl: string): Promise<void> {
-      const newRecord = new this.analysisModel({
-        commit_id: commitId,
-        repository_url: repoUrl,
-        analysis_data: analysis,
-        updatedAt: new Date(),
-      });
+  async saveAnalysis(payload: AnalysisResponseDTO): Promise<void> {
+    try {
+      await this.analysisModel.findOneAndUpdate(
+        { 
+          commit_id: payload.commitId, 
+          repository_url: payload.repoUrl 
+        }, 
+        {
+          $set: {
+            analysis_data: payload,
+            updatedAt: new Date(),
+          }
+        },
+        { upsert: true }
+      ).exec();
 
-      await newRecord.save();
+      this.logger.log(`[Persistence] Analisi salvata correttamente per ${payload.repoUrl}`);
+    } catch (error: unknown) {
+      this.logger.error(`[Persistence] Errore durante il salvataggio: ${error}`);
+      throw error;
+    }
+  }
+
+  async getLastAnalysis(repoUrl: string): Promise<AnalysisDTO | null> {
+    try {
+      const record = await this.analysisModel
+        .findOne({ repository_url: repoUrl })
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec();
+
+      if (!record) {
+        this.logger.warn(`[Persistence] Nessuna analisi trovata per il repo: ${repoUrl}`);
+        return null;
+      }
+
+      return record.analysis_data as AnalysisDTO;
+    } catch (error: unknown) {
+      this.logger.error(`[Persistence] Errore nel recupero dell'ultima analisi: ${error}`);
+      throw error;
+    }
   }
 }

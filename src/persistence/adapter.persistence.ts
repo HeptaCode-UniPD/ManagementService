@@ -12,7 +12,7 @@ export class PersistenceAdapter {
   public externalToInternal(json: any): RequestDTO {
     const dto = new RequestDTO();
     
-    dto.setRepoUrl(json.repository_url);
+    dto.repoUrl = json.repository_url;
     
     return dto;
   }

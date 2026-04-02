@@ -1,9 +1,11 @@
-export class AnalysisResponseDTO {
-  status: string;
-  response: string;
+export class AnalysisDetail {
+  agentName?: string;
+  summary?: string;
+  report?: string;
+}
 
-  constructor(status: string, response: string) {
-    this.status = status;
-    this.response = response;
-  }
+export class AnalysisResponseDTO {
+  analysisDetails?: AnalysisDetail[];
+  repoUrl?: string;
+  commitId?: string;
 }

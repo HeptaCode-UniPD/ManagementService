@@ -3,7 +3,7 @@ import type { Octokit } from '@octokit/rest';
 
 @Injectable()
 export class GithubAdapter {
-  private octokit: Octokit;
+  private octokit!: Octokit;
 
   private async getOctokit(): Promise<Octokit> {
     if (!this.octokit) {
