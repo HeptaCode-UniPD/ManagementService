@@ -1,0 +1,1243 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+src/
+  domain/
+    dto/
+      analysis.dto.ts
+      analysisresponse.dto.ts
+      request.dto.ts
+    interfaces/
+      analysismanagement.interface.ts
+      analysismanagementinfrastructure.interface.ts
+      analysismanagementpersistence.interface.ts
+      analysismanagementservice.interface.ts
+    analysismanagement.service.spec.ts
+    analysismanagement.service.ts
+  infrastructure/
+    analysismanagement.infrastructure.ts
+    github.adapter.ts
+  persistence/
+    adapter.persistence.ts
+    analysis.schema.ts
+    analysismanagement.persistence.ts
+  presentation/
+    analysismanagement.presentation.ts
+    mock.controller.ts
+  app.module.ts
+  main.ts
+test/
+  app.e2e-spec.ts
+  jest-e2e.json
+.dockerignore
+.gitignore
+.prettierrc
+docker-compose-api.yml
+docker-compose.yml
+Dockerfile
+eslint.config.mjs
+nest-cli.json
+package.json
+README.md
+tsconfig.build.json
+tsconfig.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="src/domain/dto/analysis.dto.ts">
+import { IsString, IsNotEmpty, IsUrl } from 'class-validator';
+
+export class AnalysisDTO {
+  @IsUrl()
+  @IsNotEmpty()
+  repoUrl!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  jobId!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  commitId!: string;
+
+  date!: Date;
+}
+</file>
+
+<file path="src/presentation/mock.controller.ts">
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+
+const PROCESSING_TICKS = 3;
+
+@Controller('analysis')
+export class AnalysisMockController {
+  private readonly pollCount = new Map<string, number>();
+
+  @Post('request')
+  startAnalysis(@Body() body: { repoUrl: string }) {
+    const jobId = `mock-job-${Date.now()}`;
+    this.pollCount.set(jobId, 0);
+
+    return {
+      status: 'processing',
+      repoUrl: body.repoUrl,
+      commitId: 'mock-commit-abc123',
+      jobId,
+    };
+  }
+
+  @Get('status/:jobId')
+  getStatus(@Param('jobId') jobId: string) {
+    const count = this.pollCount.get(jobId) ?? 0;
+    const next = count + 1;
+    this.pollCount.set(jobId, next);
+
+    const status = next >= PROCESSING_TICKS ? 'done' : 'processing';
+    console.log(`[Mock] poll #${next} per jobId=${jobId} → ${status}`);
+
+    return { status };
+  }
+}
+</file>
+
+<file path="test/jest-e2e.json">
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  }
+}
+</file>
+
+<file path=".gitignore">
+# compiled output
+/dist
+/node_modules
+/build
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+
+# Tests
+/coverage
+/.nyc_output
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# temp directory
+.temp
+.tmp
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+</file>
+
+<file path=".prettierrc">
+{
+  "singleQuote": true,
+  "trailingComma": "all"
+}
+</file>
+
+<file path="eslint.config.mjs">
+// @ts-check
+import eslint from '@eslint/js';
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
+
+export default tseslint.config(
+  {
+    ignores: ['eslint.config.mjs'],
+  },
+  eslint.configs.recommended,
+  ...tseslint.configs.recommendedTypeChecked,
+  eslintPluginPrettierRecommended,
+  {
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.jest,
+      },
+      sourceType: 'commonjs',
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  {
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      "prettier/prettier": ["error", { endOfLine: "auto" }],
+    },
+  },
+);
+</file>
+
+<file path="nest-cli.json">
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "deleteOutDir": true
+  }
+}
+</file>
+
+<file path="README.md">
+<p align="center">
+  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+</p>
+
+[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
+[circleci-url]: https://circleci.com/gh/nestjs/nest
+
+  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
+    <p align="center">
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
+<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
+<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
+<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
+<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
+  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
+    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
+  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+</p>
+  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
+  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+
+## Description
+
+[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+
+## Project setup
+
+```bash
+$ npm install
+```
+
+## Compile and run the project
+
+```bash
+# development
+$ npm run start
+
+# watch mode
+$ npm run start:dev
+
+# production mode
+$ npm run start:prod
+```
+
+## Run tests
+
+```bash
+# unit tests
+$ npm run test
+
+# e2e tests
+$ npm run test:e2e
+
+# test coverage
+$ npm run test:cov
+```
+
+## Deployment
+
+When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+
+If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+
+```bash
+$ npm install -g @nestjs/mau
+$ mau deploy
+```
+
+With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+
+## Resources
+
+Check out a few resources that may come in handy when working with NestJS:
+
+- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
+- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
+- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
+- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
+- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
+- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
+- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
+- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+
+## Support
+
+Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+
+## Stay in touch
+
+- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
+- Website - [https://nestjs.com](https://nestjs.com/)
+- Twitter - [@nestframework](https://twitter.com/nestframework)
+
+## License
+
+Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+</file>
+
+<file path="tsconfig.build.json">
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+}
+</file>
+
+<file path="src/persistence/analysis.schema.ts">
+import { Schema } from 'mongoose';
+
+export const AnalysisSchema = new Schema({
+  commit_id: { 
+    type: String, 
+    required: true, 
+    index: true, 
+    unique: true 
+  },
+  
+  repository_url: { 
+    type: String, 
+    required: true,
+    index: true 
+  },
+  user_token: { 
+    type: String, 
+    required: false 
+  },
+
+  status: {
+    type: String,
+    enum: ['pending', 'completed', 'failed'],
+    default: 'pending',
+    required: true
+  },
+
+  analysis_data: { 
+    type: Schema.Types.Mixed, 
+    required: true 
+  },
+
+  error_message: {
+    type: String,
+    required: false
+  }
+}, {
+  timestamps: true,
+  versionKey: false 
+});
+
+AnalysisSchema.index({ repository_url: 1, commit_id: 1 });
+</file>
+
+<file path=".dockerignore">
+node_modules
+dist
+build
+.env
+.git
+docker-compose*.yml
+</file>
+
+<file path="docker-compose-api.yml">
+services:
+  analysismanagement-service:
+    build: .
+    container_name: am-service
+    # depends_on:
+    #   - mongo
+    env_file:
+      - .env
+    ports:
+      - "4000:4000"
+    command: npm run start:prod
+
+  # mongo:
+  #   image: mongo:6
+  #   container_name: mongo-analysismanagement-dev
+  #   ports:
+  #     - "27017:27017"
+</file>
+
+<file path="docker-compose.yml">
+services:
+  analysismanagement-service:
+    build: .
+    container_name: analysismanagement-test
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: mongodb://mongo:27017/test-db
+    command: npm test
+
+  mongo:
+    image: mongo:6
+    container_name: mongo-analysismanagement-test
+    ports:
+      - "27018:27017"
+</file>
+
+<file path="src/persistence/adapter.persistence.ts">
+import { Injectable } from '@nestjs/common';
+import { RequestDTO } from '../domain/dto/request.dto';
+
+@Injectable()
+export class PersistenceAdapter {
+  public internalToExternal(repoUrl: string): any {
+    return {
+      repository_url: repoUrl,
+      processedAt: new Date(),
+    };
+  }
+  public externalToInternal(json: any): RequestDTO {
+    const dto = new RequestDTO();
+    
+    dto.repoUrl = json.repository_url;
+    
+    return dto;
+  }
+}
+</file>
+
+<file path="test/app.e2e-spec.ts">
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import request from 'supertest';
+import { App } from 'supertest/types';
+import { AppModule } from '../src/app.module';
+
+describe('AppController (e2e)', () => {
+  let app: INestApplication<App>;
+
+  beforeEach(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    await app.init();
+  });
+
+  it('/ (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/')
+      .expect(200)
+      .expect('Hello World!');
+  });
+});
+</file>
+
+<file path="Dockerfile">
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+EXPOSE 4000
+
+CMD ["node", "dist/main"]
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "resolvePackageJsonExports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false,
+    "types": ["node", "jest"]
+  }
+}
+</file>
+
+<file path="src/domain/dto/request.dto.ts">
+import { IsString, IsNotEmpty, IsUrl, IsOptional } from 'class-validator';
+
+export class RequestDTO {
+  @IsUrl()
+  @IsNotEmpty()
+  repoUrl!: string;
+
+  @IsOptional()
+  @IsString()
+  jobId?: string;
+}
+</file>
+
+<file path="src/domain/interfaces/analysismanagement.interface.ts">
+import { RequestDTO } from '../dto/request.dto'
+import { AnalysisResponseDTO } from '../dto/analysisresponse.dto'
+
+export abstract class AnalysisManagement {
+    abstract requestAnalysis(request: RequestDTO): Promise<AnalysisResponseDTO>;
+}
+</file>
+
+<file path="src/domain/interfaces/analysismanagementinfrastructure.interface.ts">
+import { RequestDTO } from '../dto/request.dto'
+
+export abstract class AnalysisManagementInfrastructureInterface {
+    abstract startAnalysis(request: RequestDTO): Promise<void>;
+    abstract getLatestCommitSha(repoUrl: string): Promise<string>;
+}
+</file>
+
+<file path="src/domain/interfaces/analysismanagementservice.interface.ts">
+import { RequestDTO } from '../dto/request.dto'
+import { AnalysisResponseDTO } from '../dto/analysisresponse.dto'
+import { AnalysisDTO } from '../dto/analysis.dto' 
+
+export abstract class AnalysisManagementServiceInterface {
+    abstract startAnalysis(request: RequestDTO): Promise<AnalysisResponseDTO>;
+    abstract saveAnalysis(payload: AnalysisResponseDTO): Promise<void>;
+    abstract getLastAnalysis(repoUrl: string): Promise<AnalysisDTO | null>;
+    abstract getAnalysisStatus(jobId: string): Promise<AnalysisResponseDTO>
+}
+</file>
+
+<file path="src/domain/analysismanagement.service.spec.ts">
+import { Test, TestingModule } from '@nestjs/testing';
+import { AnalysisManagementService } from './analysismanagement.service';
+import { AnalysisManagementPersistenceInterface } from './interfaces/analysismanagementpersistence.interface';
+import { AnalysisManagementInfrastructureInterface } from './interfaces/analysismanagementinfrastructure.interface';
+
+describe('AnalysisManagementService', () => {
+  let service: AnalysisManagementService;
+
+  const mockPersistence = {
+    getAnalysisByCommit: jest.fn(),
+    saveAnalysis: jest.fn(),
+  };
+
+  const mockInfra = {
+    getLatestCommitSha: jest.fn(), 
+    startAnalysis: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AnalysisManagementService,
+        {
+          provide: AnalysisManagementPersistenceInterface,
+          useValue: mockPersistence,
+        },
+        {
+          provide: AnalysisManagementInfrastructureInterface,
+          useValue: mockInfra,
+        },
+      ],
+    }).compile();
+
+    service = module.get<AnalysisManagementService>(AnalysisManagementService);
+    jest.resetAllMocks();
+  });
+
+  it('should return cached analysis if it already exists in DB', async () => {
+    const repoUrl = 'https://github.com/owner/repo';
+    
+    mockInfra.getLatestCommitSha.mockResolvedValue('sha-123');
+    mockPersistence.getAnalysisByCommit.mockResolvedValue({ 
+      status: 'completed', 
+      response: 'Cache found' 
+    });
+
+    const result = await service.startAnalysis(repoUrl);
+
+    expect(mockInfra.getLatestCommitSha).toHaveBeenCalledWith(repoUrl);
+    expect(mockPersistence.getAnalysisByCommit).toHaveBeenCalledWith('sha-123');
+    expect(result.status).toBe('completed');
+    
+    expect(mockInfra.startAnalysis).not.toHaveBeenCalled();
+  });
+
+  it('should start a new analysis if NOT in DB', async () => {
+    const repoUrl = 'https://github.com/owner/repo';
+
+    mockInfra.getLatestCommitSha.mockResolvedValue('new-sha-456');
+    mockPersistence.getAnalysisByCommit.mockResolvedValue(null);
+    
+    const mockNewAnalysis = { 
+        status: 'processing', 
+        response: 'Analysis started' 
+    };
+    mockInfra.startAnalysis.mockResolvedValue(mockNewAnalysis);
+    mockPersistence.saveAnalysis.mockResolvedValue(undefined);
+
+    const result = await service.startAnalysis(repoUrl);
+
+    expect(mockInfra.startAnalysis).toHaveBeenCalledWith(repoUrl, 'new-sha-456');
+    expect(mockPersistence.saveAnalysis).toHaveBeenCalledWith('new-sha-456', mockNewAnalysis);
+    expect(result.status).toBe('processing');
+  });
+});
+</file>
+
+<file path="src/infrastructure/github.adapter.ts">
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import type { Octokit } from '@octokit/rest';
+
+@Injectable()
+export class GithubAdapter {
+  private octokit!: Octokit;
+
+  private async getOctokit(): Promise<Octokit> {
+    if (!this.octokit) {
+      const { Octokit } = await import('@octokit/rest');
+      this.octokit = new Octokit();
+    }
+    return this.octokit;
+  }
+
+  async getLatestCommit(repoUrl: string): Promise<string> {
+    const octokit = await this.getOctokit();
+    try {
+      const { owner, repo } = this.parseRepoUrl(repoUrl);
+
+      const { data: repoData } = await octokit.repos.get({ owner, repo });
+
+      const { data: branchData } = await octokit.repos.getBranch({
+        owner,
+        repo,
+        branch: repoData.default_branch,
+      });
+
+      return branchData.commit.sha;
+
+    } catch (error: any) {
+      this.handleError(error);
+    }
+  }
+
+  private parseRepoUrl(url: string): { owner: string; repo: string } {
+    try {
+      const cleanUrl = url.startsWith('http') ? url : `https://github.com/${url}`;
+      const path = new URL(cleanUrl).pathname;
+      const [owner, repo] = path.split('/').filter(Boolean);
+
+      if (!owner || !repo) throw new Error();
+
+      return { owner, repo };
+    } catch (e) {
+      throw new HttpException('Invalid GitHub Repository URL', HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  private handleError(error: any): never {
+    const message = error.message || 'Unknown GitHub error';
+    const status = error.status || HttpStatus.BAD_GATEWAY;
+
+    console.error(`[GithubAdapter] Error: ${message}`);
+
+    throw new HttpException(`GitHub API Error: ${message}`, status);
+  }
+}
+</file>
+
+<file path="src/main.ts">
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,POST,DELETE,PUT,PATCH',
+    allowedHeaders: 'Content-Type, Authorization',
+  });
+
+  app.useGlobalPipes(new ValidationPipe());
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Analysis Management Service API')
+    .setDescription('Analysis and remediation of repositories')
+    .setVersion('1.0')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, document);
+
+  await app.listen(4000, '0.0.0.0');
+}
+void bootstrap();
+</file>
+
+<file path="package.json">
+{
+  "name": "ManagementService",
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "@nestjs/axios": "^4.0.1",
+    "@nestjs/common": "^11.1.17",
+    "@nestjs/core": "^11.1.17",
+    "@nestjs/mongoose": "^11.0.4",
+    "@nestjs/platform-express": "^11.1.17",
+    "@nestjs/swagger": "^11.2.6",
+    "@octokit/rest": "^22.0.1",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "mongoose": "^9.3.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.18.0",
+    "@nestjs/cli": "^11.0.16",
+    "@nestjs/schematics": "^11.0.9",
+    "@nestjs/testing": "^11.1.17",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.10.7",
+    "@types/supertest": "^6.0.2",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.2",
+    "globals": "^16.0.0",
+    "jest": "^30.0.0",
+    "prettier": "^3.4.2",
+    "source-map-support": "^0.5.21",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}
+</file>
+
+<file path="src/domain/dto/analysisresponse.dto.ts">
+export class AnalysisDetail {
+  agentName?: string;
+  summary?: string;
+  report?: string;
+}
+
+export class AnalysisResponseDTO {
+  analysisDetails?: AnalysisDetail[];
+  repoUrl?: string;
+  commitId?: string;
+  status!: 'done' | 'processing' | 'error';
+  jobId?: string;
+}
+</file>
+
+<file path="src/domain/interfaces/analysismanagementpersistence.interface.ts">
+import { RequestDTO } from '../dto/request.dto'
+import { AnalysisResponseDTO } from '../dto/analysisresponse.dto'
+import { AnalysisDTO } from '../dto/analysis.dto'
+
+export abstract class AnalysisManagementPersistenceInterface {
+    abstract saveAnalysis(payload: AnalysisResponseDTO): Promise<void>;
+    abstract getAnalysisByCommit(commitId: string): Promise<AnalysisResponseDTO | null>;
+    abstract getAnalysisByJob(jobId: string): Promise<AnalysisResponseDTO | null>;
+    abstract getLastAnalysis(repoUrl: string): Promise<AnalysisDTO | null>;
+}
+</file>
+
+<file path="src/persistence/analysismanagement.persistence.ts">
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { AnalysisManagementPersistenceInterface } from '../domain/interfaces/analysismanagementpersistence.interface';
+import { AnalysisResponseDTO } from '../domain/dto/analysisresponse.dto';
+import { AnalysisDTO } from '../domain/dto/analysis.dto';
+
+@Injectable()
+export class AnalysisManagementPersistence extends AnalysisManagementPersistenceInterface {
+  
+  private readonly logger = new Logger(AnalysisManagementPersistence.name);
+
+  constructor(
+    @InjectModel('Analysis') private readonly analysisModel: Model<any>,
+  ) {
+    super();
+  }
+
+  async getAnalysisByCommit(commitId: string): Promise<AnalysisResponseDTO | null> {
+    const record = await this.analysisModel
+      .findOne({ commit_id: commitId })
+      .lean()
+      .exec();
+    return record?.analysis_data ?? null;
+  }
+
+  async getAnalysisByJob(jobId: string): Promise<AnalysisResponseDTO | null> {
+    const record = await this.analysisModel
+      .findOne({ job_id: jobId })
+      .lean()
+      .exec();
+    return record?.analysis_data ?? null;
+  }
+
+  async saveAnalysis(payload: AnalysisResponseDTO): Promise<void> {
+    try {
+      await this.analysisModel.findOneAndUpdate(
+        { 
+          commit_id: payload.commitId, 
+          repository_url: payload.repoUrl 
+        }, 
+        {
+          $set: {
+            job_id: payload.jobId,
+            analysis_data: payload,
+            updatedAt: new Date(),
+          }
+        },
+        { upsert: true }
+      ).exec();
+
+      this.logger.log(`[Persistence] Analisi salvata correttamente per ${payload.repoUrl}`);
+    } catch (error: unknown) {
+      this.logger.error(`[Persistence] Errore durante il salvataggio: ${error}`);
+      throw error;
+    }
+  }
+
+  async getLastAnalysis(repoUrl: string): Promise<AnalysisDTO | null> {
+    try {
+      const record = await this.analysisModel
+        .findOne({ repository_url: repoUrl })
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec();
+
+      if (!record) {
+        this.logger.warn(`[Persistence] Nessuna analisi trovata per il repo: ${repoUrl}`);
+        return null;
+      }
+
+      return record.analysis_data as AnalysisDTO;
+    } catch (error: unknown) {
+      this.logger.error(`[Persistence] Errore nel recupero dell'ultima analisi: ${error}`);
+      throw error;
+    }
+  }
+}
+</file>
+
+<file path="src/app.module.ts">
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { AnalysisManagementService } from './domain/analysismanagement.service';
+import { AnalysisManagementPersistence } from './persistence/analysismanagement.persistence';
+import { PersistenceAdapter } from './persistence/adapter.persistence';
+import { AnalysisManagementInfrastructure } from './infrastructure/analysismanagement.infrastructure';
+import { GithubAdapter } from './infrastructure/github.adapter';
+import { AnalysisSchema } from './persistence/analysis.schema';
+import { AnalysisManagementPersistenceInterface } from './domain/interfaces/analysismanagementpersistence.interface';
+import { AnalysisManagementInfrastructureInterface } from './domain/interfaces/analysismanagementinfrastructure.interface';
+import { AnalysisManagementPresentation } from './presentation/analysismanagement.presentation';
+// import { AnalysisMockController } from './presentation/mock.controller';
+import { AnalysisManagementServiceInterface } from './domain/interfaces/analysismanagementservice.interface';
+import { HttpModule } from '@nestjs/axios';
+
+@Module({
+  imports: [
+    HttpModule,
+    MongooseModule.forRoot(process.env.MONGO_URI!, {
+      connectionFactory: (connection) => {
+        console.log('MongoDB Connected to:', connection.name);
+        return connection;
+      }
+    }),
+    MongooseModule.forFeature([{ name: 'Analysis', schema: AnalysisSchema }])
+  ],
+  controllers: [
+    // AnalysisMockController,
+    AnalysisManagementPresentation,
+  ],
+  providers: [
+    {
+      provide: AnalysisManagementServiceInterface,
+      useClass: AnalysisManagementService,
+    },
+    {
+      provide: AnalysisManagementPersistenceInterface,
+      useClass: AnalysisManagementPersistence,
+    },
+    {
+      provide: AnalysisManagementInfrastructureInterface,
+      useClass: AnalysisManagementInfrastructure,
+    },
+    PersistenceAdapter,
+    GithubAdapter,
+  ],
+})
+export class AppModule {}
+</file>
+
+<file path="src/infrastructure/analysismanagement.infrastructure.ts">
+import { Injectable, Logger } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+import { AxiosError } from 'axios';
+import { AnalysisManagementInfrastructureInterface } from '../domain/interfaces/analysismanagementinfrastructure.interface';
+import { GithubAdapter } from './github.adapter';
+import { RequestDTO } from '../domain/dto/request.dto';
+
+@Injectable()
+export class AnalysisManagementInfrastructure extends AnalysisManagementInfrastructureInterface {
+  private readonly logger = new Logger(AnalysisManagementInfrastructure.name);
+
+  constructor(
+    private readonly githubAdapter: GithubAdapter,
+    private readonly httpService: HttpService,
+  ) {
+    super();
+  }
+
+  async getLatestCommitSha(repoUrl: string): Promise<string> {
+    this.logger.log(`[Infrastructure] Fetching latest commit SHA for: ${repoUrl}`);
+    const latestSha = await this.githubAdapter.getLatestCommit(repoUrl);
+    this.logger.log(`[Infrastructure] Current GitHub SHA: ${latestSha}`);
+    return latestSha;
+  }
+
+  async startAnalysis(request: RequestDTO): Promise<void> {
+  const gatewayUrl = process.env.MS2_GATEWAY_URL;
+  const apiKey = process.env.MS2_API_KEY;
+  const { repoUrl, jobId } = request; // Destructuring pulito
+
+  if (!gatewayUrl) {throw new Error('MS2_GATEWAY_URL non configurato');}
+  if (!apiKey) {throw new Error('MS2_API_KEY non configurato');}
+
+  const commitSha = await this.getLatestCommitSha(repoUrl);
+
+  try {
+    this.logger.log(`[Infrastructure] Notifico Lambda per l'analisi di: ${repoUrl}`);
+
+    await firstValueFrom(
+      this.httpService.post(
+        gatewayUrl, 
+        {
+          repoUrl,
+          jobId,
+          commitSha,
+        },
+        {
+          headers: {
+            'x-api-key': apiKey,
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+    );
+
+    this.logger.log(`[Infrastructure] Notifica inviata con successo.`);
+
+  } catch (error: unknown) {
+    let errorMessage = 'Errore durante la notifica al gateway';
+
+    if (error instanceof AxiosError) {
+      const status = error.response?.status;
+      errorMessage = error.response?.data?.message || error.message;
+      this.logger.error(`[Infrastructure] Gateway Error [${status}]: ${errorMessage}`);
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+      this.logger.error(`[Infrastructure] System Error: ${errorMessage}`);
+    }
+
+    throw new Error(`Impossibile avviare l'analisi: ${errorMessage}`);
+  }
+}
+}
+</file>
+
+<file path="src/domain/analysismanagement.service.ts">
+import { Injectable, Logger } from '@nestjs/common';
+import { AnalysisManagementServiceInterface } from './interfaces/analysismanagementservice.interface';
+import { AnalysisManagementPersistenceInterface } from './interfaces/analysismanagementpersistence.interface';
+import { AnalysisManagementInfrastructureInterface } from './interfaces/analysismanagementinfrastructure.interface';
+import { AnalysisResponseDTO } from './dto/analysisresponse.dto';
+import { randomUUID } from 'node:crypto';
+import { RequestDTO } from './dto/request.dto';
+import { AnalysisDTO } from './dto/analysis.dto';
+
+@Injectable()
+export class AnalysisManagementService implements AnalysisManagementServiceInterface {
+  private readonly logger = new Logger(AnalysisManagementService.name);
+
+  constructor(
+    private readonly database: AnalysisManagementPersistenceInterface,
+    private readonly infrastructure: AnalysisManagementInfrastructureInterface,
+  ) {}
+
+  async startAnalysis(request: RequestDTO): Promise<AnalysisResponseDTO> {
+    const latestCommitId = await this.infrastructure.getLatestCommitSha(request.repoUrl);
+    const cachedAnalysis = await this.database.getAnalysisByCommit(latestCommitId);
+    const jobId = randomUUID();
+
+    console.log('DEBUG cachedAnalysis:', JSON.stringify(cachedAnalysis, null, 2));
+
+    // Analisi già pronta e completa
+    if (cachedAnalysis && cachedAnalysis.analysisDetails) {
+      this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già presente.`);
+      return { status: 'done', repoUrl: request.repoUrl, commitId: latestCommitId };
+    }
+
+    // Analisi già in corso
+    if (cachedAnalysis && !cachedAnalysis.analysisDetails) {
+      this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già in corso.`);
+      return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: latestCommitId };
+    }
+
+    // Nuova analisi
+    this.logger.log(`[Service] Avvio nuova analisi per il commit ${latestCommitId}...`);
+    const initialPayload: AnalysisResponseDTO = {
+      status: 'processing',
+      repoUrl: request.repoUrl,
+      commitId: latestCommitId,
+      analysisDetails: [],
+    };
+
+    await this.database.saveAnalysis({ jobId, status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId });
+    await this.infrastructure.startAnalysis(request); // manda jobId a Lambda
+
+    return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId };
+  }
+
+  async handleWebhookResponse(payload: AnalysisResponseDTO): Promise<void> {
+    this.logger.log(`[Service] Ricevuto Webhook per il repo: ${payload.repoUrl}`);
+
+    await this.database.saveAnalysis(payload);
+    
+    this.logger.log(`[Service] Risultati dell'analisi salvati correttamente per ${payload.repoUrl}`);
+  }
+
+  async saveAnalysis(payload: AnalysisResponseDTO): Promise<void> {
+    await this.database.saveAnalysis(payload);
+  }
+
+  async getAnalysisStatus(jobId: string): Promise<AnalysisResponseDTO> {
+    const analysis = await this.database.getAnalysisByCommit(jobId);
+
+    if (!analysis) {
+      return { status: 'error', repoUrl: '' };
+    }
+
+    const isDone = analysis.analysisDetails && analysis.analysisDetails.length > 0;
+    return {
+      status: isDone ? 'done' : 'processing',
+      repoUrl: analysis.repoUrl,
+      commitId: jobId,
+    };
+  }
+
+  async getLastAnalysis(repoUrl: string): Promise<AnalysisDTO | null> {
+    return await this.database.getLastAnalysis(repoUrl);
+  }
+}
+</file>
+
+<file path="src/presentation/analysismanagement.presentation.ts">
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, Query, Param, Headers, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
+import { RequestDTO } from '../domain/dto/request.dto';
+import { AnalysisResponseDTO } from '../domain/dto/analysisresponse.dto';
+import { AnalysisManagementServiceInterface } from '../domain/interfaces/analysismanagementservice.interface';
+import { AnalysisDTO } from '../domain/dto/analysis.dto';
+import { AnalysisManagement } from '../domain/interfaces/analysismanagement.interface';
+
+@Controller('analysis')
+export class AnalysisManagementPresentation implements AnalysisManagement{
+  logger: any;
+  constructor(
+    private readonly analysisService: AnalysisManagementServiceInterface,
+  ) {}
+  abstract: any;
+
+  @Post('request')
+  @HttpCode(HttpStatus.OK)
+  async requestAnalysis(@Body() request: RequestDTO): Promise<AnalysisResponseDTO> {
+    console.log('DEBUG request body:', request);
+    return await this.analysisService.startAnalysis(request);
+  }
+
+  @Get('status/:jobId')
+  @HttpCode(HttpStatus.OK)
+  async getStatus(@Param('jobId') jobId: string): Promise<AnalysisResponseDTO> {
+    return await this.analysisService.getAnalysisStatus(jobId);
+  }
+
+  @Get('view')
+  @HttpCode(HttpStatus.OK)
+  async viewLastAnalysis(@Query('url') repoUrl: string): Promise<AnalysisDTO | null> {
+    const response = await this.analysisService.getLastAnalysis(repoUrl);
+    return response;
+  }
+
+  @Post('webhook')
+  @HttpCode(HttpStatus.OK)
+  async handleWebhook(@Headers('x-api-key') apiKey: string, @Body() payload: AnalysisResponseDTO) {
+    const expectedApiKey = process.env.MS1_API_KEY;
+
+    if (!apiKey || apiKey !== expectedApiKey) {
+      this.logger.error(`Accesso negato. Key ricevuta: ${apiKey}`);
+      throw new UnauthorizedException('API Key non valida o mancante');
+    }
+
+    try {
+      await this.analysisService.saveAnalysis(payload);
+      return { status: 'success' };
+    } catch (error) {
+      this.logger.error('Errore nel salvataggio dell\'analisi', error);
+      throw new InternalServerErrorException('Errore nel salvataggio');
+    }
+  }
+}
+</file>
+
+</files>

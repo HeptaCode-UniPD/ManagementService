@@ -1,4 +1,7 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, Query, Param, Headers, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
+import { 
+  Controller, Post, Body, HttpCode, HttpStatus, Get, Query, Param, 
+  Headers, UnauthorizedException, InternalServerErrorException, Logger 
+} from '@nestjs/common';
 import { RequestDTO } from '../domain/dto/request.dto';
 import { AnalysisResponseDTO } from '../domain/dto/analysisresponse.dto';
 import { AnalysisManagementServiceInterface } from '../domain/interfaces/analysismanagementservice.interface';
@@ -7,7 +10,7 @@ import { AnalysisManagement } from '../domain/interfaces/analysismanagement.inte
 
 @Controller('analysis')
 export class AnalysisManagementPresentation implements AnalysisManagement{
-  logger: any;
+  private readonly logger = new Logger(AnalysisManagementPresentation.name);
   constructor(
     private readonly analysisService: AnalysisManagementServiceInterface,
   ) {}
