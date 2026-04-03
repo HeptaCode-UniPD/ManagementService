@@ -36,7 +36,7 @@ export class AnalysisManagementPresentation implements AnalysisManagement{
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   async handleWebhook(@Headers('x-api-key') apiKey: string, @Body() payload: AnalysisResponseDTO) {
-    const expectedApiKey = process.env.MS2_API_KEY;
+    const expectedApiKey = process.env.MS1_API_KEY;
 
     if (!apiKey || apiKey !== expectedApiKey) {
       this.logger.error(`Accesso negato. Key ricevuta: ${apiKey}`);
