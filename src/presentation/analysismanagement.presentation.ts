@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, Query, Param } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, Query, Param, Headers, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
 import { RequestDTO } from '../domain/dto/request.dto';
 import { AnalysisResponseDTO } from '../domain/dto/analysisresponse.dto';
 import { AnalysisManagementServiceInterface } from '../domain/interfaces/analysismanagementservice.interface';
@@ -7,6 +7,7 @@ import { AnalysisManagement } from '../domain/interfaces/analysismanagement.inte
 
 @Controller('analysis')
 export class AnalysisManagementPresentation implements AnalysisManagement{
+  logger: any;
   constructor(
     private readonly analysisService: AnalysisManagementServiceInterface,
   ) {}
@@ -33,11 +34,21 @@ export class AnalysisManagementPresentation implements AnalysisManagement{
   }
 
   @Post('webhook')
-  async handleWebhook(@Body() payload: AnalysisResponseDTO) {
-    console.log(`Ricevuti risultati per la repo: ${payload.repoUrl}`);
-    
-    await this.analysisService.saveAnalysis(payload);
-    
-    return { received: true };
+  @HttpCode(HttpStatus.OK)
+  async handleWebhook(@Headers('x-api-key') apiKey: string, @Body() payload: AnalysisResponseDTO) {
+    const expectedApiKey = process.env.MS2_API_KEY;
+
+    if (!apiKey || apiKey !== expectedApiKey) {
+      this.logger.error(`Accesso negato. Key ricevuta: ${apiKey}`);
+      throw new UnauthorizedException('API Key non valida o mancante');
+    }
+
+    try {
+      await this.analysisService.saveAnalysis(payload);
+      return { status: 'success' };
+    } catch (error) {
+      this.logger.error('Errore nel salvataggio dell\'analisi', error);
+      throw new InternalServerErrorException('Errore nel salvataggio');
+    }
   }
 }
