@@ -45,7 +45,7 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
     };
 
     await this.database.saveAnalysis({ jobId, status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId });
-    await this.infrastructure.startAnalysis(request, latestCommitId); // manda jobId a Lambda
+    await this.infrastructure.startAnalysis(request); // manda jobId a Lambda
 
     return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId };
   }

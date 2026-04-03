@@ -24,17 +24,15 @@ export class AnalysisManagementInfrastructure extends AnalysisManagementInfrastr
     return latestSha;
   }
 
-  async startAnalysis(request: RequestDTO, commitId: string): Promise<void> {
+  async startAnalysis(request: RequestDTO): Promise<void> {
   const gatewayUrl = process.env.MS2_GATEWAY_URL;
   const apiKey = process.env.MS2_API_KEY;
   const { repoUrl, jobId } = request; // Destructuring pulito
 
-  if (!gatewayUrl) {
-    throw new Error('MS2_GATEWAY_URL non configurato');
-  }
-  if (!apiKey) {
-    throw new Error('MS2_API_KEY non configurato');
-  }
+  if (!gatewayUrl) {throw new Error('MS2_GATEWAY_URL non configurato');}
+  if (!apiKey) {throw new Error('MS2_API_KEY non configurato');}
+
+  const commitSha = await this.getLatestCommitSha(repoUrl);
 
   try {
     this.logger.log(`[Infrastructure] Notifico Lambda per l'analisi di: ${repoUrl}`);
@@ -45,7 +43,7 @@ export class AnalysisManagementInfrastructure extends AnalysisManagementInfrastr
         {
           repoUrl,
           jobId,
-          commitId,
+          commitSha,
         },
         {
           headers: {
