@@ -25,39 +25,52 @@ export class AnalysisManagementInfrastructure extends AnalysisManagementInfrastr
   }
 
   async startAnalysis(request: RequestDTO, commitId: string): Promise<void> {
-    const gatewayUrl = process.env.GATEWAY_URL;
-    const repoUrl = request.repoUrl;
-    const jobId = request.jobId;
+  const gatewayUrl = process.env.MS2_GATEWAY_URL;
+  const apiKey = process.env.MS2_API_KEY;
+  const { repoUrl, jobId } = request; // Destructuring pulito
 
-    if (!gatewayUrl) {
-      throw new Error('GATEWAY_URL non configurato');
-    }
+  if (!gatewayUrl) {
+    throw new Error('MS2_GATEWAY_URL non configurato');
+  }
+  if (!apiKey) {
+    throw new Error('MS2_API_KEY non configurato');
+  }
 
-    try {
-      this.logger.log(`[Infrastructure] Notifico Lambda per l'analisi di: ${request.repoUrl}`);
+  try {
+    this.logger.log(`[Infrastructure] Notifico Lambda per l'analisi di: ${repoUrl}`);
 
-      await firstValueFrom(
-        this.httpService.post(gatewayUrl, {
+    await firstValueFrom(
+      this.httpService.post(
+        gatewayUrl, 
+        {
           repoUrl,
           jobId,
           commitId,
-        })
-      );
+        },
+        {
+          headers: {
+            'x-api-key': apiKey,
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+    );
 
-      this.logger.log(`[Infrastructure] Notifica inviata con successo.`);
+    this.logger.log(`[Infrastructure] Notifica inviata con successo.`);
 
-    } catch (error: unknown) {
-      let errorMessage = 'Errore durante la notifica al gateway';
+  } catch (error: unknown) {
+    let errorMessage = 'Errore durante la notifica al gateway';
 
-      if (error instanceof AxiosError) {
-        errorMessage = error.response?.data?.message || error.message;
-        this.logger.error(`[Infrastructure] Gateway Error: ${errorMessage}`);
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-        this.logger.error(`[Infrastructure] System Error: ${errorMessage}`);
-      }
-
-      throw new Error(`Impossibile avviare l'analisi: ${errorMessage}`);
+    if (error instanceof AxiosError) {
+      const status = error.response?.status;
+      errorMessage = error.response?.data?.message || error.message;
+      this.logger.error(`[Infrastructure] Gateway Error [${status}]: ${errorMessage}`);
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+      this.logger.error(`[Infrastructure] System Error: ${errorMessage}`);
     }
+
+    throw new Error(`Impossibile avviare l'analisi: ${errorMessage}`);
   }
+}
 }
