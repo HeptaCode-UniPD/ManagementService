@@ -9,6 +9,7 @@ import { AnalysisSchema } from './persistence/analysis.schema';
 import { AnalysisManagementPersistenceInterface } from './domain/interfaces/analysismanagementpersistence.interface';
 import { AnalysisManagementInfrastructureInterface } from './domain/interfaces/analysismanagementinfrastructure.interface';
 import { AnalysisManagementPresentation } from './presentation/analysismanagement.presentation';
+// import { AnalysisMockController } from './presentation/mock.controller';
 import { AnalysisManagementServiceInterface } from './domain/interfaces/analysismanagementservice.interface';
 import { HttpModule } from '@nestjs/axios';
 
@@ -24,6 +25,7 @@ import { HttpModule } from '@nestjs/axios';
     MongooseModule.forFeature([{ name: 'Analysis', schema: AnalysisSchema }])
   ],
   controllers: [
+    // AnalysisMockController,
     AnalysisManagementPresentation,
   ],
   providers: [

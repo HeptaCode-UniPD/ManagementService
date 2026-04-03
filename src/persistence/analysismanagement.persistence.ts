@@ -21,10 +21,15 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
       .findOne({ commit_id: commitId })
       .lean()
       .exec();
+    return record?.analysis_data ?? null;
+  }
 
-    if (!record) return null;
-
-    return record.analysis_data as AnalysisResponseDTO;
+  async getAnalysisByJob(jobId: string): Promise<AnalysisResponseDTO | null> {
+    const record = await this.analysisModel
+      .findOne({ job_id: jobId })
+      .lean()
+      .exec();
+    return record?.analysis_data ?? null;
   }
 
   async saveAnalysis(payload: AnalysisResponseDTO): Promise<void> {
@@ -36,6 +41,7 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
         }, 
         {
           $set: {
+            job_id: payload.jobId,
             analysis_data: payload,
             updatedAt: new Date(),
           }

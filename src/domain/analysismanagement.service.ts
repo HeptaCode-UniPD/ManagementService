@@ -3,6 +3,7 @@ import { AnalysisManagementServiceInterface } from './interfaces/analysismanagem
 import { AnalysisManagementPersistenceInterface } from './interfaces/analysismanagementpersistence.interface';
 import { AnalysisManagementInfrastructureInterface } from './interfaces/analysismanagementinfrastructure.interface';
 import { AnalysisResponseDTO } from './dto/analysisresponse.dto';
+import { randomUUID } from 'node:crypto';
 import { RequestDTO } from './dto/request.dto';
 import { AnalysisDTO } from './dto/analysis.dto';
 
@@ -18,6 +19,7 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
   async startAnalysis(request: RequestDTO): Promise<AnalysisResponseDTO> {
     const latestCommitId = await this.infrastructure.getLatestCommitSha(request.repoUrl);
     const cachedAnalysis = await this.database.getAnalysisByCommit(latestCommitId);
+    const jobId = randomUUID();
 
     console.log('DEBUG cachedAnalysis:', JSON.stringify(cachedAnalysis, null, 2));
 
@@ -42,10 +44,10 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
       analysisDetails: [],
     };
 
-    await this.database.saveAnalysis(initialPayload);
-    await this.infrastructure.startAnalysis(request, latestCommitId);
+    await this.database.saveAnalysis({ jobId, status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId });
+    await this.infrastructure.startAnalysis(request, latestCommitId); // manda jobId a Lambda
 
-    return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: latestCommitId };
+    return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId };
   }
 
   async handleWebhookResponse(payload: AnalysisResponseDTO): Promise<void> {
