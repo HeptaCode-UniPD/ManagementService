@@ -7,7 +7,7 @@ import { AnalysisDTO } from '../domain/dto/analysis.dto';
 
 @Injectable()
 export class AnalysisManagementPersistence extends AnalysisManagementPersistenceInterface {
-  
+
   private readonly logger = new Logger(AnalysisManagementPersistence.name);
 
   constructor(
@@ -21,7 +21,16 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
       .findOne({ commit_id: commitId })
       .lean()
       .exec();
-    return record?.analysis_data ?? null;
+
+    if (!record) return null;
+
+    return {
+      commitId: record.commit_id,
+      repoUrl: record.repository_url,
+      jobId: record.job_id,
+      status: record.status,
+      analysisDetails: record.analysis_data ?? [],
+    };
   }
 
   async getAnalysisByJob(jobId: string): Promise<AnalysisResponseDTO | null> {
@@ -29,7 +38,16 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
       .findOne({ job_id: jobId })
       .lean()
       .exec();
-    return record?.analysis_data ?? null;
+
+    if (!record) return null;
+
+    return {
+      commitId: record.commit_id,
+      repoUrl: record.repository_url,
+      jobId: record.job_id,
+      status: record.status,
+      analysisDetails: record.analysis_data ?? [],
+    };
   }
 
   async saveAnalysis(payload: AnalysisResponseDTO): Promise<void> {
@@ -41,7 +59,11 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
             repository_url: payload.repoUrl,
             job_id: payload.jobId,
             status: payload.status,
-            analysis_data: payload,
+            // analysisDetails viene salvato in analysis_data solo quando presente
+            // così al primo save (processing) non sovrascrive nulla
+            ...(payload.analysisDetails !== undefined && {
+              analysis_data: payload.analysisDetails,
+            }),
             updatedAt: new Date(),
           }
         },
@@ -68,7 +90,12 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
         return null;
       }
 
-      return record.analysis_data as AnalysisDTO;
+      return {
+        repoUrl: record.repository_url,
+        jobId: record.job_id,
+        commitId: record.commit_id,
+        date: record.createdAt,
+      } as AnalysisDTO;
     } catch (error: unknown) {
       this.logger.error(`[Persistence] Errore nel recupero dell'ultima analisi: ${error}`);
       throw error;
