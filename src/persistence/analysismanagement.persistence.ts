@@ -35,13 +35,12 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
   async saveAnalysis(payload: AnalysisResponseDTO): Promise<void> {
     try {
       await this.analysisModel.findOneAndUpdate(
-        { 
-          commit_id: payload.commitId, 
-          repository_url: payload.repoUrl 
-        }, 
+        { commit_id: payload.commitId },
         {
           $set: {
+            repository_url: payload.repoUrl,
             job_id: payload.jobId,
+            status: payload.status,
             analysis_data: payload,
             updatedAt: new Date(),
           }

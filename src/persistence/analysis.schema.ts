@@ -13,6 +13,13 @@ export const AnalysisSchema = new Schema({
     required: true,
     index: true 
   },
+
+  job_id: {
+    type: String,
+    required: false,
+    index: true
+  },
+
   user_token: { 
     type: String, 
     required: false 
@@ -20,14 +27,14 @@ export const AnalysisSchema = new Schema({
 
   status: {
     type: String,
-    enum: ['pending', 'completed', 'failed'],
-    default: 'pending',
+    enum: ['processing', 'done', 'error'],
+    default: 'processing',
     required: true
   },
 
   analysis_data: { 
     type: Schema.Types.Mixed, 
-    required: true 
+    required: false
   },
 
   error_message: {

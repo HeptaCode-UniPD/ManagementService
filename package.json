@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",
-    "@nestjs/common": "^11.1.17",
+    "@nestjs/common": "^11.1.18",
     "@nestjs/core": "^11.1.17",
     "@nestjs/mongoose": "^11.0.4",
     "@nestjs/platform-express": "^11.1.17",

@@ -19,42 +19,41 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
   async startAnalysis(request: RequestDTO): Promise<AnalysisResponseDTO> {
     const latestCommitId = await this.infrastructure.getLatestCommitSha(request.repoUrl);
     const cachedAnalysis = await this.database.getAnalysisByCommit(latestCommitId);
-    const jobId = randomUUID();
-
-    console.log('DEBUG cachedAnalysis:', JSON.stringify(cachedAnalysis, null, 2));
 
     // Analisi già pronta e completa
-    if (cachedAnalysis && cachedAnalysis.analysisDetails) {
+    if (cachedAnalysis && cachedAnalysis.analysisDetails && cachedAnalysis.analysisDetails.length > 0) {
       this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già presente.`);
-      return { status: 'done', repoUrl: request.repoUrl, commitId: latestCommitId };
+      return { status: 'done', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: cachedAnalysis.jobId };
     }
 
     // Analisi già in corso
-    if (cachedAnalysis && !cachedAnalysis.analysisDetails) {
+    if (cachedAnalysis) {
       this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già in corso.`);
-      return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: latestCommitId };
+      return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: cachedAnalysis.jobId };
     }
 
     // Nuova analisi
-    this.logger.log(`[Service] Avvio nuova analisi per il commit ${latestCommitId}...`);
-    const initialPayload: AnalysisResponseDTO = {
+    const jobId = randomUUID();
+    this.logger.log(`[Service] Avvio nuova analisi per il commit ${latestCommitId} con jobId ${jobId}...`);
+
+    // FIX: salva prima nel DB con il jobId
+    await this.database.saveAnalysis({
+      jobId,
       status: 'processing',
       repoUrl: request.repoUrl,
       commitId: latestCommitId,
-      analysisDetails: [],
-    };
+    });
 
-    await this.database.saveAnalysis({ jobId, status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId });
-    await this.infrastructure.startAnalysis(request); // manda jobId a Lambda
+    // FIX: imposta il jobId sul request prima di passarlo all'infrastruttura
+    request.jobId = jobId;
+    await this.infrastructure.startAnalysis(request);
 
     return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId };
   }
 
   async handleWebhookResponse(payload: AnalysisResponseDTO): Promise<void> {
     this.logger.log(`[Service] Ricevuto Webhook per il repo: ${payload.repoUrl}`);
-
     await this.database.saveAnalysis(payload);
-    
     this.logger.log(`[Service] Risultati dell'analisi salvati correttamente per ${payload.repoUrl}`);
   }
 
@@ -63,7 +62,7 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
   }
 
   async getAnalysisStatus(jobId: string): Promise<AnalysisResponseDTO> {
-    const analysis = await this.database.getAnalysisByCommit(jobId);
+    const analysis = await this.database.getAnalysisByJob(jobId);
 
     if (!analysis) {
       return { status: 'error', repoUrl: '' };
@@ -73,7 +72,8 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
     return {
       status: isDone ? 'done' : 'processing',
       repoUrl: analysis.repoUrl,
-      commitId: jobId,
+      commitId: analysis.commitId,
+      jobId,
     };
   }
 
