@@ -8,6 +8,6 @@ export class AnalysisResponseDTO {
   analysisDetails?: AnalysisDetail[];
   repoUrl?: string;
   commitId?: string;
-  status!: 'done' | 'processing' | 'error';
   jobId?: string;
+  status!: 'done' | 'processing' | 'error';
 }

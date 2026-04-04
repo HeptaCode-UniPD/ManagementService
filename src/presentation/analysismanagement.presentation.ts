@@ -39,6 +39,11 @@ export class AnalysisManagementPresentation implements AnalysisManagement{
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   async handleWebhook(@Headers('x-api-key') apiKey: string, @Body() payload: AnalysisResponseDTO) {
+
+    if(payload.analysisDetails) {
+      this.logger.log(JSON.stringify(payload.analysisDetails, null, 2));
+    }
+
     const expectedApiKey = process.env.MS1_API_KEY;
 
     if (!apiKey || apiKey !== expectedApiKey) {
