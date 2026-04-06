@@ -44,7 +44,7 @@ async handleWebhook(
 ) {
   this.logger.log('Headers ricevuti: ' + JSON.stringify(headers));
   
-  const apiKey = headers['x-api-key'];
+  const apiKey = headers['x-ms1-key'];
   const expectedApiKey = process.env.MS1_API_KEY;
 
   if (!apiKey || apiKey !== expectedApiKey) {
