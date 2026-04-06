@@ -88,28 +88,40 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
     }
   }
 
-  async getLastAnalysis(repoUrl: string): Promise<AnalysisDTO | null> {
-    try {
-      const record = await this.analysisModel
-        .findOne({ repository_url: repoUrl })
-        .sort({ createdAt: -1 })
-        .lean()
-        .exec();
+  async getLastAnalysis(repoUrl: string): Promise<AnalysisResponseDTO | null> {
+  try {
+    const record = await this.analysisModel
+      .findOne({ repository_url: repoUrl })
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
 
-      if (!record) {
-        this.logger.warn(`[Persistence] Nessuna analisi trovata per il repo: ${repoUrl}`);
-        return null;
-      }
-
-      return {
-        repoUrl: record.repository_url,
-        jobId: record.job_id,
-        commitId: record.commit_id,
-        date: record.createdAt,
-      } as AnalysisDTO;
-    } catch (error: unknown) {
-      this.logger.error(`[Persistence] Errore nel recupero dell'ultima analisi: ${error}`);
-      throw error;
+    if (!record) {
+      this.logger.warn(`[Persistence] Nessuna analisi trovata per il repo: ${repoUrl}`);
+      return null;
     }
+
+    const analysisDetails: AnalysisDetail[] = record.analysis_data ?? [];
+
+    const scores = analysisDetails
+      .map(detail => {
+        const text = `${detail.summary ?? ''} ${detail.report ?? ''}`;
+        const match = text.match(/Global Maturity Score[:\s*]*(\d+)/i);
+        return match ? parseInt(match[1]) : null;
+      })
+      .filter((score): score is number => score !== null);
+
+    return {
+      repoUrl: record.repository_url,
+      jobId: record.job_id,
+      commitId: record.commit_id,
+      status: record.status,
+      analysisDetails,
+      scores,
+    };
+  } catch (error: unknown) {
+    this.logger.error(`[Persistence] Errore nel recupero dell'ultima analisi: ${error}`);
+    throw error;
   }
+}
 }
