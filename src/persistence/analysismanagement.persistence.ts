@@ -30,6 +30,7 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
       jobId: record.job_id,
       status: record.status,
       analysisDetails: record.analysis_data ?? [],
+      date: new Date(),
     };
   }
 
@@ -58,6 +59,7 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
     status: record.status,
     analysisDetails,
     scores,
+    date: new Date(),
   };
 }
 
@@ -118,6 +120,7 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
       status: record.status,
       analysisDetails,
       scores,
+      date: new Date(),
     };
   } catch (error: unknown) {
     this.logger.error(`[Persistence] Errore nel recupero dell'ultima analisi: ${error}`);

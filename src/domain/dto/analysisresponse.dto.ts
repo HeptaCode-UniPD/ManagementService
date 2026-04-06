@@ -11,4 +11,5 @@ export class AnalysisResponseDTO {
   jobId?: string;
   status!: 'done' | 'processing' | 'error';
   scores?: number[];
+  date!: Date;
 }

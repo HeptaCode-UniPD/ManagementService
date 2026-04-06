@@ -31,7 +31,7 @@ export class AnalysisManagementPresentation implements AnalysisManagement{
 
   @Get('view')
   @HttpCode(HttpStatus.OK)
-  async viewLastAnalysis(@Query('url') repoUrl: string): Promise<AnalysisDTO | null> {
+  async viewLastAnalysis(@Query('url') repoUrl: string): Promise<AnalysisResponseDTO | null> {
     const response = await this.analysisService.getLastAnalysis(repoUrl);
     return response;
   }

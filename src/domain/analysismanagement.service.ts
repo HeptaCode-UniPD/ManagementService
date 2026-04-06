@@ -22,12 +22,12 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
 
     if (cachedAnalysis && cachedAnalysis.analysisDetails && cachedAnalysis.analysisDetails.length > 0) {
       this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già presente.`);
-      return { status: 'done', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: cachedAnalysis.jobId };
+      return { status: 'done', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: cachedAnalysis.jobId , date: new Date()};
     }
 
     if (cachedAnalysis) {
       this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già in corso.`);
-      return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: cachedAnalysis.jobId };
+      return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: cachedAnalysis.jobId, date: new Date()};
     }
 
     const jobId = randomUUID();
@@ -38,12 +38,13 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
       status: 'processing',
       repoUrl: request.repoUrl,
       commitId: latestCommitId,
+      date: new Date(),
     });
 
     request.jobId = jobId;
     await this.infrastructure.startAnalysis(request);
 
-    return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId };
+    return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId , date: new Date(),};
   }
 
   async handleWebhookResponse(payload: AnalysisResponseDTO): Promise<void> {
@@ -60,7 +61,7 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
     const analysis = await this.database.getAnalysisByJob(jobId);
 
     if (!analysis) {
-      return { status: 'error', repoUrl: '' };
+      return { status: 'error', repoUrl: '', date: new Date(),};
     }
 
     const isDone = analysis.analysisDetails && analysis.analysisDetails.length > 0;
@@ -69,10 +70,11 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
       repoUrl: analysis.repoUrl,
       commitId: analysis.commitId,
       jobId,
+      date: new Date(),
     };
   }
 
-  async getLastAnalysis(repoUrl: string): Promise<AnalysisDTO | null> {
+  async getLastAnalysis(repoUrl: string): Promise<AnalysisResponseDTO | null> {
     return await this.database.getLastAnalysis(repoUrl);
   }
 }
