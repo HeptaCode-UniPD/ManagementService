@@ -36,29 +36,32 @@ export class AnalysisManagementPresentation implements AnalysisManagement{
     return response;
   }
 
-  @Post('webhook')
-  @HttpCode(HttpStatus.OK)
-  async handleWebhook(@Headers() header: string, @Body() payload: AnalysisResponseDTO) {
+ @Post('webhook')
+@HttpCode(HttpStatus.OK)
+async handleWebhook(
+  @Headers() headers: Record<string, string>,
+  @Body() payload: AnalysisResponseDTO
+) {
+  this.logger.log('Headers ricevuti: ' + JSON.stringify(headers));
+  
+  const apiKey = headers['x-api-key'];
+  const expectedApiKey = process.env.MS1_API_KEY;
 
-    const apiKey = header['x-api-key'];
-
-    if(payload.analysisDetails) {
-      this.logger.log(JSON.stringify(payload.analysisDetails, null, 2));
-    }
-
-    const expectedApiKey = process.env.MS1_API_KEY;
-
-    if (!apiKey || apiKey !== expectedApiKey) {
-      this.logger.error(`Accesso negato. Key ricevuta: ${apiKey}`);
-      throw new UnauthorizedException('API Key non valida o mancante');
-    }
-
-    try {
-      await this.analysisService.saveAnalysis(payload);
-      return { status: 'success' };
-    } catch (error) {
-      this.logger.error('Errore nel salvataggio dell\'analisi', error);
-      throw new InternalServerErrorException('Errore nel salvataggio');
-    }
+  if (!apiKey || apiKey !== expectedApiKey) {
+    this.logger.error(`Accesso negato. Key ricevuta: ${apiKey}`);
+    throw new UnauthorizedException('API Key non valida o mancante');
   }
+
+  if (payload.analysisDetails) {
+    this.logger.log(JSON.stringify(payload.analysisDetails, null, 2));
+  }
+
+  try {
+    await this.analysisService.saveAnalysis(payload);
+    return { status: 'success' };
+  } catch (error) {
+    this.logger.error("Errore nel salvataggio dell'analisi", error);
+    throw new InternalServerErrorException('Errore nel salvataggio');
+  }
+}
 }
