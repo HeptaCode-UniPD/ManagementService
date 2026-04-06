@@ -20,23 +20,19 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
     const latestCommitId = await this.infrastructure.getLatestCommitSha(request.repoUrl);
     const cachedAnalysis = await this.database.getAnalysisByCommit(latestCommitId);
 
-    // Analisi già pronta e completa
     if (cachedAnalysis && cachedAnalysis.analysisDetails && cachedAnalysis.analysisDetails.length > 0) {
       this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già presente.`);
       return { status: 'done', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: cachedAnalysis.jobId };
     }
 
-    // Analisi già in corso
     if (cachedAnalysis) {
       this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già in corso.`);
       return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: cachedAnalysis.jobId };
     }
 
-    // Nuova analisi
     const jobId = randomUUID();
     this.logger.log(`[Service] Avvio nuova analisi per il commit ${latestCommitId} con jobId ${jobId}...`);
 
-    // FIX: salva prima nel DB con il jobId
     await this.database.saveAnalysis({
       jobId,
       status: 'processing',
@@ -44,7 +40,6 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
       commitId: latestCommitId,
     });
 
-    // FIX: imposta il jobId sul request prima di passarlo all'infrastruttura
     request.jobId = jobId;
     await this.infrastructure.startAnalysis(request);
 

@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AnalysisManagementPersistenceInterface } from '../domain/interfaces/analysismanagementpersistence.interface';
-import { AnalysisResponseDTO } from '../domain/dto/analysisresponse.dto';
+import { AnalysisDetail, AnalysisResponseDTO } from '../domain/dto/analysisresponse.dto';
 import { AnalysisDTO } from '../domain/dto/analysis.dto';
 
 @Injectable()
@@ -34,21 +34,32 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
   }
 
   async getAnalysisByJob(jobId: string): Promise<AnalysisResponseDTO | null> {
-    const record = await this.analysisModel
-      .findOne({ job_id: jobId })
-      .lean()
-      .exec();
+  const record = await this.analysisModel
+    .findOne({ job_id: jobId })
+    .lean()
+    .exec();
 
-    if (!record) return null;
+  if (!record) return null;
 
-    return {
-      commitId: record.commit_id,
-      repoUrl: record.repository_url,
-      jobId: record.job_id,
-      status: record.status,
-      analysisDetails: record.analysis_data ?? [],
-    };
-  }
+  const analysisDetails: AnalysisDetail[] = record.analysis_data ?? [];
+
+  const scores = analysisDetails
+  .map(detail => {
+    const text = `${detail.summary ?? ''} ${detail.report ?? ''}`;
+    const match = text.match(/Global Maturity Score[:\s*]*(\d+)/i);
+    return match ? parseInt(match[1]) : null;
+  })
+  .filter((score): score is number => score !== null);
+
+  return {
+    commitId: record.commit_id,
+    repoUrl: record.repository_url,
+    jobId: record.job_id,
+    status: record.status,
+    analysisDetails,
+    scores,
+  };
+}
 
   async saveAnalysis(payload: AnalysisResponseDTO): Promise<void> {
     try {

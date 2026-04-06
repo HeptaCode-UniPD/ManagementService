@@ -10,4 +10,5 @@ export class AnalysisResponseDTO {
   commitId?: string;
   jobId?: string;
   status!: 'done' | 'processing' | 'error';
+  scores?: number[];
 }
