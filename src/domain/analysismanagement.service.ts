@@ -5,7 +5,6 @@ import { AnalysisManagementInfrastructureInterface } from './interfaces/analysis
 import { AnalysisResponseDTO } from './dto/analysisresponse.dto';
 import { randomUUID } from 'node:crypto';
 import { RequestDTO } from './dto/request.dto';
-import { AnalysisDTO } from './dto/analysis.dto';
 
 @Injectable()
 export class AnalysisManagementService implements AnalysisManagementServiceInterface {
@@ -75,6 +74,18 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
   }
 
   async getLastAnalysis(repoUrl: string): Promise<AnalysisResponseDTO | null> {
-    return await this.database.getLastAnalysis(repoUrl);
-  }
+  const lastAnalysis = await this.database.getLastAnalysis(repoUrl);
+
+  if (!lastAnalysis) return null;
+
+  const latestCommitId = await this.infrastructure.getLatestCommitSha(repoUrl);
+  const isLatest = lastAnalysis.commitId === latestCommitId;
+
+  this.logger.log(`[Service] Commit in DB: ${lastAnalysis.commitId} | Commit GitHub: ${latestCommitId} | isLatest: ${isLatest}`);
+
+  return {
+    ...lastAnalysis,
+    isLatest,
+  };
+}
 }

@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AnalysisManagementPersistenceInterface } from '../domain/interfaces/analysismanagementpersistence.interface';
 import { AnalysisDetail, AnalysisResponseDTO } from '../domain/dto/analysisresponse.dto';
-import { AnalysisDTO } from '../domain/dto/analysis.dto';
 
 @Injectable()
 export class AnalysisManagementPersistence extends AnalysisManagementPersistenceInterface {
@@ -104,6 +103,8 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
     }
 
     const analysisDetails: AnalysisDetail[] = record.analysis_data ?? [];
+
+    this.logger.log('record.analysis_data: ' + JSON.stringify(record.analysis_data));
 
     const scores = analysisDetails
       .map(detail => {
