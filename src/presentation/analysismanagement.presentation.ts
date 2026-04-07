@@ -56,6 +56,10 @@ async handleWebhook(
     this.logger.log(JSON.stringify(payload.analysisDetails, null, 2));
   }
 
+  if(payload.error) {
+    return {status: 'error', error: payload.error};
+  }
+
   try {
     await this.analysisService.saveAnalysis(payload);
     return { status: 'success' };

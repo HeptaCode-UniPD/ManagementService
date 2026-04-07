@@ -13,4 +13,5 @@ export class AnalysisResponseDTO {
   scores?: number[];
   date!: Date;
   isLatest?: boolean; // true se il commit in DB == ultimo commit su GitHub
+  error?: string;
 }
