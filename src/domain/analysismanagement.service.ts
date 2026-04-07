@@ -60,7 +60,17 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
     const analysis = await this.database.getAnalysisByJob(jobId);
 
     if (!analysis) {
-      return { status: 'error', repoUrl: '', date: new Date(),};
+      return { status: 'error', repoUrl: '', date: new Date() };
+    }
+
+    if (analysis.status === 'error') {
+      return {
+        status: 'error',
+        repoUrl: analysis.repoUrl,
+        commitId: analysis.commitId,
+        jobId,
+        date: analysis.date,
+      };
     }
 
     const isDone = analysis.analysisDetails && analysis.analysisDetails.length > 0;
