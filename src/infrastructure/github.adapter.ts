@@ -3,21 +3,20 @@ import type { Octokit } from '@octokit/rest';
 
 @Injectable()
 export class GithubAdapter {
-  private octokit!: Octokit;
+  private octokit!: any;
 
   private async getOctokit(): Promise<Octokit> {
     if (!this.octokit) {
-      const { Octokit } = await import('@octokit/rest');
+      const { Octokit } = require('@octokit/rest');
       this.octokit = new Octokit();
     }
     return this.octokit;
   }
 
   async getLatestCommit(repoUrl: string): Promise<string> {
+    const { owner, repo } = this.parseRepoUrl(repoUrl);
     const octokit = await this.getOctokit();
     try {
-      const { owner, repo } = this.parseRepoUrl(repoUrl);
-
       const { data: repoData } = await octokit.repos.get({ owner, repo });
 
       const { data: branchData } = await octokit.repos.getBranch({
