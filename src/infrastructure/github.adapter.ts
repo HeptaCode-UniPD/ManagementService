@@ -6,11 +6,13 @@ export class GithubAdapter {
   private octokit!: Octokit;
 
   private async getOctokit(): Promise<Octokit> {
-    if (!this.octokit) {
-      const { Octokit } = await import('@octokit/rest');
-      this.octokit = new Octokit();
-    }
-    return this.octokit;
+  if (!this.octokit) {
+    const { Octokit } = await import('@octokit/rest');
+    this.octokit = new Octokit({
+      auth: process.env.GITHUB_TOKEN,
+    });
+  }
+  return this.octokit;
   }
 
   async getLatestCommit(repoUrl: string): Promise<string> {
