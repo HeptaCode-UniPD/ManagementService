@@ -76,12 +76,12 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
             ...(payload.analysisDetails !== undefined && {
               analysis_data: payload.analysisDetails,
             }),
-            // AGGIUNTO: salva l'errore se presente
+            // AGGIUNGI QUESTA RIGA:
             ...(payload.error !== undefined && {
-              error_message: payload.error,
+              error_message: payload.error, // Mappa 'error' del DTO su 'error_message' del DB
             }),
           },
-          $setOnInsert: {createdAt: new Date(), }
+          $setOnInsert: { createdAt: new Date() }
         },
         { upsert: true }
       ).exec();
