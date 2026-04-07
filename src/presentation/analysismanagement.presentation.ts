@@ -56,6 +56,8 @@ async handleWebhook(
     this.logger.log(JSON.stringify(payload.analysisDetails, null, 2));
   }
 
+  this.logger.log(JSON.stringify(payload));
+
   if(payload.error) {
     return {status: 'error', error: payload.error};
   }
