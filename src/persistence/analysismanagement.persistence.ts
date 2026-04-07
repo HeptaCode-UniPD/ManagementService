@@ -29,7 +29,7 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
       jobId: record.job_id,
       status: record.status,
       analysisDetails: record.analysis_data ?? [],
-      date: new Date(),
+      date: record.createdAt ?? new Date(),
     };
   }
 
@@ -58,7 +58,7 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
     status: record.status,
     analysisDetails,
     scores,
-    date: new Date(),
+    date: record.createdAt ?? new Date(),
   };
 }
 
@@ -76,8 +76,8 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
             ...(payload.analysisDetails !== undefined && {
               analysis_data: payload.analysisDetails,
             }),
-            updatedAt: new Date(),
-          }
+          },
+          $setOnInsert: {createdAt: new Date(), }
         },
         { upsert: true }
       ).exec();
@@ -121,7 +121,7 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
       status: record.status,
       analysisDetails,
       scores,
-      date: new Date(),
+      date: record.createdAt ?? new Date(),
     };
   } catch (error: unknown) {
     this.logger.error(`[Persistence] Errore nel recupero dell'ultima analisi: ${error}`);

@@ -69,7 +69,7 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
       repoUrl: analysis.repoUrl,
       commitId: analysis.commitId,
       jobId,
-      date: new Date(),
+      date: analysis.date,
     };
   }
 
