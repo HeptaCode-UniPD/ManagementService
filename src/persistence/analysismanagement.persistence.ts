@@ -30,6 +30,7 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
       status: record.status,
       analysisDetails: record.analysis_data ?? [],
       date: record.createdAt ?? new Date(),
+      error: record.error_message, // <--- AGGIUNTO
     };
   }
 
@@ -52,14 +53,15 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
   .filter((score): score is number => score !== null);
 
   return {
-    commitId: record.commit_id,
-    repoUrl: record.repository_url,
-    jobId: record.job_id,
-    status: record.status,
-    analysisDetails,
-    scores,
-    date: record.createdAt ?? new Date(),
-  };
+      commitId: record.commit_id,
+      repoUrl: record.repository_url,
+      jobId: record.job_id,
+      status: record.status,
+      analysisDetails,
+      scores,
+      date: record.createdAt ?? new Date(),
+      error: record.error_message, // <--- AGGIUNTO
+    };
 }
 
   async saveAnalysis(payload: AnalysisResponseDTO): Promise<void> {
@@ -71,10 +73,12 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
             repository_url: payload.repoUrl,
             job_id: payload.jobId,
             status: payload.status,
-            // analysisDetails viene salvato in analysis_data solo quando presente
-            // così al primo save (processing) non sovrascrive nulla
             ...(payload.analysisDetails !== undefined && {
               analysis_data: payload.analysisDetails,
+            }),
+            // AGGIUNTO: salva l'errore se presente
+            ...(payload.error !== undefined && {
+              error_message: payload.error,
             }),
           },
           $setOnInsert: {createdAt: new Date(), }
@@ -122,6 +126,7 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
       analysisDetails,
       scores,
       date: record.createdAt ?? new Date(),
+      error: record.error_message, // <--- AGGIUNTO
     };
   } catch (error: unknown) {
     this.logger.error(`[Persistence] Errore nel recupero dell'ultima analisi: ${error}`);

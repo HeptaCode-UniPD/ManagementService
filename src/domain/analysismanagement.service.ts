@@ -19,7 +19,7 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
     const latestCommitId = await this.infrastructure.getLatestCommitSha(request.repoUrl);
     const cachedAnalysis = await this.database.getAnalysisByCommit(latestCommitId);
 
-    if (cachedAnalysis && cachedAnalysis.analysisDetails && cachedAnalysis.analysisDetails.length > 0) {
+    if (cachedAnalysis && cachedAnalysis.analysisDetails && cachedAnalysis.analysisDetails.length > 0 && cachedAnalysis.status === 'error') {
       this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già presente.`);
       return { status: 'done', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: cachedAnalysis.jobId , date: new Date()};
     }
