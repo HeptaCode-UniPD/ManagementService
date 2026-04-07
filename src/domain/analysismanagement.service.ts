@@ -41,8 +41,16 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
     });
 
     request.jobId = jobId;
-    await this.infrastructure.startAnalysis(request);
+    
+    // Rimuoviamo l'await. L'operazione prosegue in background.
+    this.infrastructure.startAnalysis(request).catch(error => {
+      this.logger.error(`[Service] Fallimento asincrono nell'avvio dell'analisi per ${jobId}: ${error.message}`);
+      
+      // Opzionale: aggiornare il DB a 'error' se la chiamata al gateway fallisce
+      // this.database.saveAnalysis({ jobId, status: 'error', repoUrl: request.repoUrl, commitId: latestCommitId, date: new Date() });
+    });
 
+    // Risponde immediatamente al chiamante evitando il 504
     return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId , date: new Date(),};
   }
 
