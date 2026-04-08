@@ -9,7 +9,7 @@ export class AnalysisDetail {
 export class AnalysisResponseDTO {
   analysisDetails?: AnalysisDetail[];
   repoUrl?: string;
-  commitId?: string;
+  commitId!: string;
   jobId?: string;
   status!: 'done' | 'processing' | 'error';
   @IsOptional()

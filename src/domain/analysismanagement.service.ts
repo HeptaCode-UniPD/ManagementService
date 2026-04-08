@@ -88,7 +88,7 @@ await this.database.saveAnalysis({
     const analysis = await this.database.getAnalysisByJob(jobId);
 
     if (!analysis) {
-      return { status: 'error', repoUrl: '', date: new Date() };
+      return { status: 'error', commitId: '', repoUrl: '', date: new Date() };
     }
 
     if (analysis.status === 'error') {

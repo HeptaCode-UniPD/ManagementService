@@ -64,41 +64,43 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
     };
 }
 
-  async saveAnalysis(payload: AnalysisResponseDTO): Promise<void> {
+  // src/persistence/analysismanagement.persistence.ts
+
+async saveAnalysis(payload: AnalysisResponseDTO): Promise<void> {
   try {
-    const updateQuery: any = {
-      $set: {
-        repository_url: payload.repoUrl,
-        job_id: payload.jobId,
-        status: payload.status,
-        ...(payload.analysisDetails !== undefined && {
-          analysis_data: payload.analysisDetails,
-        }),
-      },
-      $setOnInsert: { createdAt: new Date() }
+    // 1. Definiamo i dati da aggiornare
+    const updateData = {
+      job_id: payload.jobId,
+      status: payload.status,
+      repository_url: payload.repoUrl,
+      // Se status è processing (nuova analisi), resettiamo i vecchi dati/errori
+      ...(payload.status === 'processing' ? { 
+          analysis_data: [], 
+          error_message: null 
+      } : {}),
+      // Se ci sono dati (es. status done), li salviamo
+      ...(payload.analysisDetails && { analysis_data: payload.analysisDetails }),
+      // Se c'è un errore, lo salviamo
+      ...(payload.error && { error_message: payload.error }),
+      updatedAt: new Date(),
     };
 
-    // Se c'è un nuovo errore lo settiamo, altrimenti puliamo quello vecchio
-    if (payload.error !== undefined) {
-      updateQuery.$set.error_message = payload.error;
-    } else {
-      updateQuery.$unset = { error_message: "" };
-    }
-
-    await this.analysisModel.findOneAndUpdate(
-      { commit_id: payload.commitId },
-      updateQuery,
-      { upsert: true }
+    const result = await this.analysisModel.findOneAndUpdate(
+      { commit_id: payload.commitId.trim() }, // .trim() per evitare problemi di stringa
+      { $set: updateData },
+      { 
+        upsert: true,       // Crea se non esiste
+        new: true,          // Ritorna il documento aggiornato
+        runValidators: true,
+        setDefaultsOnInsert: true 
+      }
     ).exec();
-    
-    // ...
 
-      this.logger.log(`[Persistence] Analisi salvata correttamente per ${payload.repoUrl}`);
-    } catch (error: unknown) {
-      this.logger.error(`[Persistence] Errore durante il salvataggio: ${error}`);
-      throw error;
-    }
+    this.logger.log(`[Persistence] Analisi per ${payload.commitId} aggiornata (Stato: ${payload.status})`);
+  } catch (error) {
+    throw error;
   }
+}
 
   async getLastAnalysis(repoUrl: string): Promise<AnalysisResponseDTO | null> {
   try {
