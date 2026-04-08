@@ -9,7 +9,5 @@ export class RequestDTO {
   @IsString()
   jobId?: string;
 
-  @IsOptional()
-  @IsString()
-  commitId?: string;
+  commitId?: any;
 }

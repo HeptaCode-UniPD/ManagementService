@@ -8,10 +8,6 @@ import { AnalysisManagementServiceInterface } from '../src/domain/interfaces/ana
 import { AnalysisManagementPersistenceInterface } from '../src/domain/interfaces/analysismanagementpersistence.interface';
 import { AnalysisManagementInfrastructureInterface } from '../src/domain/interfaces/analysismanagementinfrastructure.interface';
 
-interface AnalysisBody {
-  jobId: string;
-  status: string;
-}
 
 describe('AnalysisManagement (e2e)', () => {
   let app: INestApplication;
@@ -55,12 +51,10 @@ describe('AnalysisManagement (e2e)', () => {
       .post('/analysis/request')
       .send({ repoUrl: 'https://github.com/owner/repo' });
 
-      const body = response.body as AnalysisBody;
-
       expect(response.status).toBe(200);
-      expect(body).toHaveProperty('jobId');       
-      expect(typeof body.jobId).toBe('string');   
-      expect(body.status).toBe('processing');
+      expect(response.body).toHaveProperty('jobId');
+      expect(typeof response.body.jobId).toBe('string');
+      expect(response.body.status).toBe('processing');
   });
 
   it('/analysis/webhook (POST) - Unauthorized without API Key', () => {

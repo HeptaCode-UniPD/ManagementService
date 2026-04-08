@@ -41,15 +41,16 @@ describe('AnalysisManagementInfrastructure', () => {
   // ─── startAnalysis ────────────────────────────────────────────────
 
   describe('startAnalysis', () => {
+    // Il sorgente legge commitSha da request.commitId
     const request: RequestDTO = {
       repoUrl: 'https://github.com/owner/repo',
       jobId: 'job-123',
+      commitId: 'sha-xyz',
     } as RequestDTO;
 
     beforeEach(() => {
       process.env.MS2_GATEWAY_URL = 'https://gateway.example.com';
       process.env.MS2_API_KEY = 'test-api-key';
-      mockGithubAdapter.getLatestCommit.mockResolvedValue('sha-xyz');
     });
 
     afterEach(() => {
@@ -83,22 +84,18 @@ describe('AnalysisManagementInfrastructure', () => {
       );
     });
 
-    it('should throw a wrapped error on AxiosError', async () => {
+    it('should throw the AxiosError message on AxiosError', async () => {
       const axiosError = new AxiosError('Bad Gateway');
       axiosError.response = { status: 502, data: { message: 'Upstream error' } } as any;
       mockHttpService.post.mockReturnValue(throwError(() => axiosError));
 
-      await expect(infrastructure.startAnalysis(request)).rejects.toThrow(
-        "Impossibile avviare l'analisi: Upstream error",
-      );
+      await expect(infrastructure.startAnalysis(request)).rejects.toThrow('Bad Gateway');
     });
 
-    it('should throw a wrapped error on generic Error', async () => {
+    it('should throw the original message on generic Error', async () => {
       mockHttpService.post.mockReturnValue(throwError(() => new Error('Network failure')));
 
-      await expect(infrastructure.startAnalysis(request)).rejects.toThrow(
-        "Impossibile avviare l'analisi: Network failure",
-      );
+      await expect(infrastructure.startAnalysis(request)).rejects.toThrow('Network failure');
     });
   });
 });

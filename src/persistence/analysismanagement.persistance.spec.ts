@@ -150,17 +150,36 @@ describe('AnalysisManagementPersistence', () => {
 
       await persistence.saveAnalysis(payload);
 
+      // Il sorgente filtra per job_id e usa { upsert: true, new: true }
       expect(mockFindOneAndUpdate).toHaveBeenCalledWith(
-        { commit_id: 'sha-123' },
+        { job_id: 'job-abc' },
         expect.objectContaining({
           $set: expect.objectContaining({
             repository_url: payload.repoUrl,
-            job_id: payload.jobId,
+            commit_id: payload.commitId,
             status: payload.status,
           }),
         }),
-        { upsert: true },
+        { upsert: true, new: true },
       );
+    });
+
+    it('should include analysis_data as [] in $set when status is processing', async () => {
+      mockExec.mockResolvedValue(undefined);
+
+      const payload: AnalysisResponseDTO = {
+        commitId: 'sha-123',
+        repoUrl: 'https://github.com/owner/repo',
+        jobId: 'job-abc',
+        status: 'processing',
+        date: new Date(),
+      };
+
+      await persistence.saveAnalysis(payload);
+
+      const callArgs = (mockFindOneAndUpdate.mock.calls as any[][])[0][1];
+      expect(callArgs.$set).toHaveProperty('analysis_data', []);
+      expect(callArgs.$set).toHaveProperty('error_message', null);
     });
 
     it('should include analysis_data in $set when analysisDetails is provided', async () => {
@@ -178,30 +197,29 @@ describe('AnalysisManagementPersistence', () => {
       await persistence.saveAnalysis(payload);
 
       expect(mockFindOneAndUpdate).toHaveBeenCalledWith(
-        { commit_id: 'sha-123' },
+        { job_id: 'job-abc' },
         expect.objectContaining({
           $set: expect.objectContaining({ analysis_data: payload.analysisDetails }),
         }),
-        { upsert: true },
+        { upsert: true, new: true },
       );
     });
 
-    it('should NOT include analysis_data in $set when analysisDetails is undefined', async () => {
-        mockExec.mockResolvedValue(undefined);
+    it('should NOT include analysis_data in $set when status is done and analysisDetails is undefined', async () => {
+      mockExec.mockResolvedValue(undefined);
 
-        const payload: AnalysisResponseDTO = {
-            commitId: 'sha-123',
-            repoUrl: 'https://github.com/owner/repo',
-            jobId: 'job-abc',
-            status: 'processing',
-            date: new Date(),
-        };
+      const payload: AnalysisResponseDTO = {
+        commitId: 'sha-123',
+        repoUrl: 'https://github.com/owner/repo',
+        jobId: 'job-abc',
+        status: 'done',
+        date: new Date(),
+      };
 
-        await persistence.saveAnalysis(payload);
+      await persistence.saveAnalysis(payload);
 
-        const callArgs = (mockFindOneAndUpdate.mock.calls as any[][])[0][1];
-
-        expect(callArgs.$set).not.toHaveProperty('analysis_data');
+      const callArgs = (mockFindOneAndUpdate.mock.calls as any[][])[0][1];
+      expect(callArgs.$set).not.toHaveProperty('analysis_data');
     });
 
     it('should rethrow errors from findOneAndUpdate', async () => {

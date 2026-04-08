@@ -26,7 +26,7 @@ export class GithubAdapter {
         branch: repoData.default_branch,
       });
       return branchData.commit.sha;
-    } catch (error: unknown) {
+    } catch (error: any) {
       this.handleError(error);
     }
   }
@@ -43,18 +43,13 @@ export class GithubAdapter {
     }
   }
 
-  private handleError(error: unknown): never {
+  private handleError(error: any): never {
     if (error instanceof HttpException) {
       throw error;
     }
 
-    // FIX: i plain object da Octokit (es. { message, status }) non sono instanceof Error,
-    const message =
-      error instanceof Error
-        ? error.message
-        : (error as { message?: string }).message ?? 'Unknown GitHub error';
-
-    const status = (error as { status?: number }).status ?? HttpStatus.BAD_GATEWAY;
+    const message = error.message || 'Unknown GitHub error';
+    const status = error.status || HttpStatus.BAD_GATEWAY;
     console.error(`[GithubAdapter] Error: ${message}`);
     throw new HttpException(`GitHub API Error: ${message}`, status);
   }

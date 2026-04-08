@@ -4,25 +4,13 @@ import { Model } from 'mongoose';
 import { AnalysisManagementPersistenceInterface } from '../domain/interfaces/analysismanagementpersistence.interface';
 import { AnalysisDetail, AnalysisResponseDTO } from '../domain/dto/analysisresponse.dto';
 
-interface AnalysisDocument {
-  commit_id: string;
-  repository_url: string;
-  job_id: string;
-  status: string;
-  analysis_data?: AnalysisDetail[];
-  createdAt?: Date;
-  updatedAt?: Date;
-  error_message?: string;
-}
-
 @Injectable()
 export class AnalysisManagementPersistence extends AnalysisManagementPersistenceInterface {
 
   private readonly logger = new Logger(AnalysisManagementPersistence.name);
 
   constructor(
-    @InjectModel('Analysis') private readonly analysisModel: Model<AnalysisDocument>,
-  ) {
+    @InjectModel('Analysis') private readonly analysisModel: Model<any>,) {
     super();
   }
 
@@ -77,16 +65,15 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
   }
 
   async saveAnalysis(payload: AnalysisResponseDTO): Promise<void> {
-    const updateData: Record<string, unknown> = {
+    const updateData: Record<string, any> = {
       status: payload.status,
       repository_url: payload.repoUrl,
       commit_id: payload.commitId,
-      job_id: payload.jobId,
       updatedAt: new Date(),
     };
 
-    // FIX: rimosso analysis_data: [] dal blocco processing — non va incluso se analysisDetails è assente
     if (payload.status === 'processing') {
+      updateData.analysis_data = [];
       updateData.error_message = null;
     }
 
@@ -103,9 +90,9 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
 
     // FIX: filtro su commit_id invece di job_id; rimosso new: true
     await this.analysisModel.findOneAndUpdate(
-      { commit_id: payload.commitId },
+      { job_id: payload.jobId },
       { $set: updateData },
-      { upsert: true }
+      { upsert: true, new: true }
     ).exec();
   }
 
@@ -145,8 +132,7 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
         error: record.error_message ?? undefined,
       };
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`[Persistence] Errore nel recupero dell'ultima analisi: ${message}`);
+      this.logger.error(`[Persistence] Errore nel recupero dell'ultima analisi: ${error}`);
       throw error;
     }
   }

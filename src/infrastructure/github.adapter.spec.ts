@@ -26,7 +26,7 @@ describe('GithubAdapter', () => {
 
     adapter = module.get<GithubAdapter>(GithubAdapter);
 
-    (adapter as unknown as { octokit: typeof mockOctokitInstance }).octokit = mockOctokitInstance;
+    (adapter as any).octokit = mockOctokitInstance;
   });
 
   describe('getLatestCommit', () => {

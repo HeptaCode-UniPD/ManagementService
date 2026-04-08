@@ -27,40 +27,29 @@ export class AnalysisManagementInfrastructure extends AnalysisManagementInfrastr
   async startAnalysis(request: RequestDTO): Promise<void> {
     const gatewayUrl = process.env.MS2_GATEWAY_URL;
     const apiKey = process.env.MS2_API_KEY;
-
-    const repoUrl: string = request.repoUrl ?? '';
-    const jobId: string = request.jobId ?? '';
+    const repoUrl = request.repoUrl;
+    const jobId = request.jobId;
+    const commitSha = request.commitId;
 
     if (!gatewayUrl) { throw new Error('MS2_GATEWAY_URL non configurato'); }
     if (!apiKey) { throw new Error('MS2_API_KEY non configurato'); }
 
-    // FIX: recupera commitSha da GitHub invece di leggerlo dalla request
-    const commitSha: string = await this.githubAdapter.getLatestCommit(repoUrl);
-
     try {
       this.logger.log(`[Infrastructure] Notifico Lambda per l'analisi di: ${repoUrl}`);
-      await firstValueFrom<unknown>(
+
+      await firstValueFrom(
         this.httpService.post(
           gatewayUrl,
           { repoUrl, jobId, commitSha },
           { headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' } }
         )
       );
+
       this.logger.log(`[Infrastructure] Notifica inviata con successo.`);
     } catch (error: unknown) {
-      // FIX: estrae il messaggio upstream da AxiosError (response.data.message)
-      let message: string;
-      if (error instanceof AxiosError) {
-        const data = error.response?.data as { message?: string } | undefined;
-        message = data?.message ?? error.message;
-      } else if (error instanceof Error) {
-        message = error.message;
-      } else {
-        message = 'Errore sconosciuto';
-      }
-
+      const message = error instanceof Error ? error.message : 'Errore sconosciuto';
       this.logger.error(`[Infrastructure] Errore nella notifica Lambda: ${message}`);
-      throw new Error(`Impossibile avviare l'analisi: ${message}`);
+      throw new Error(message);
     }
   }
 }

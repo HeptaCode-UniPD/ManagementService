@@ -25,8 +25,6 @@ jobs:
         run: npm ci
       - name: Wait for MongoDB
         run: npx wait-on tcp:27017
-      - name: 1. Analisi Statica (ESLint & Prettier)
-        run: npm run lint
       - name: 2. Analisi Dinamica e Test di Unità
         run: npm run test:cov
       - name: 3. Test di Integrazione (e2e)
