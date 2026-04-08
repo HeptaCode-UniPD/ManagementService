@@ -5,10 +5,11 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
   app.enableCors({
     origin: '*',
-    methods: 'GET,POST,DELETE,PUT,PATCH',
-    allowedHeaders: 'Content-Type, Authorization',
+    methods: 'GET,POST,DELETE,PUT,PATCH,OPTIONS',
+    allowedHeaders: 'Content-Type, Authorization, x-api-key, x-ms1-key',
   });
 
   app.useGlobalPipes(new ValidationPipe());
@@ -18,10 +19,10 @@ async function bootstrap() {
     .setDescription('Analysis and remediation of repositories')
     .setVersion('1.0')
     .build();
-
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, document);
 
   await app.listen(4000, '0.0.0.0');
 }
+
 void bootstrap();
