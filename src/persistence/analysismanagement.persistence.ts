@@ -143,7 +143,8 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
         error: record.error_message ?? undefined,
       };
     } catch (error: unknown) {
-      this.logger.error(`[Persistence] Errore nel recupero dell'ultima analisi: ${error}`);
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`[Persistence] Errore nel recupero dell'ultima analisi: ${message}`);
       throw error;
     }
   }

@@ -26,9 +26,9 @@ export class AnalysisManagementInfrastructure extends AnalysisManagementInfrastr
   async startAnalysis(request: RequestDTO): Promise<void> {
   const gatewayUrl = process.env.MS2_GATEWAY_URL;
   const apiKey = process.env.MS2_API_KEY;
-  const repoUrl = request.repoUrl;
-  const jobId = request.jobId;
-  const commitSha = request.commitId; // ← usa quello già calcolato dal service, NON ricalcolarlo
+  const repoUrl: string = request.repoUrl ?? '';
+  const jobId: string = request.jobId ?? '';
+  const commitSha: string = request.commitId ?? '';
 
   if (!gatewayUrl) { throw new Error('MS2_GATEWAY_URL non configurato'); }
   if (!apiKey) { throw new Error('MS2_API_KEY non configurato'); }

@@ -12,12 +12,13 @@ import { AnalysisManagementPresentation } from './presentation/analysismanagemen
 // import { AnalysisMockController } from './presentation/mock.controller';
 import { AnalysisManagementServiceInterface } from './domain/interfaces/analysismanagementservice.interface';
 import { HttpModule } from '@nestjs/axios';
+import { Connection } from 'mongoose';
 
 @Module({
   imports: [
     HttpModule,
     MongooseModule.forRoot(process.env.MONGO_URI!, {
-      connectionFactory: (connection) => {
+      connectionFactory: (connection: Connection) => {
         console.log('MongoDB Connected to:', connection.name);
         return connection;
       }

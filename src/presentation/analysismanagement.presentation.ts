@@ -5,7 +5,6 @@ import {
 import { RequestDTO } from '../domain/dto/request.dto';
 import { AnalysisResponseDTO } from '../domain/dto/analysisresponse.dto';
 import { AnalysisManagementServiceInterface } from '../domain/interfaces/analysismanagementservice.interface';
-import { AnalysisDTO } from '../domain/dto/analysis.dto';
 import { AnalysisManagement } from '../domain/interfaces/analysismanagement.interface';
 
 @Controller('analysis')
