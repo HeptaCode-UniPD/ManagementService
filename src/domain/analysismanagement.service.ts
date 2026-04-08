@@ -82,6 +82,7 @@ request.commitId = latestCommitId; // ← aggiunto: così l'infra non ricalcola
         commitId: analysis.commitId,
         jobId,
         date: analysis.date,
+        error: analysis.error,
       };
     }
 
