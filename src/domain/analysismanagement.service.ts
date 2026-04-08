@@ -19,7 +19,6 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
     const latestCommitId = await this.infrastructure.getLatestCommitSha(request.repoUrl);
     const cachedAnalysis = await this.database.getAnalysisByCommit(latestCommitId);
 
-    // Se esiste un'analisi precedente e NON è in errore, verifichiamo se è completata o in corso
     if (cachedAnalysis && cachedAnalysis.status !== 'error') {
       if (cachedAnalysis.analysisDetails && cachedAnalysis.analysisDetails.length > 0) {
         this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già presente e completata.`);
@@ -30,8 +29,6 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
       }
     }
 
-    // Se arriviamo qui, significa che non c'è nessuna analisi pregressa, 
-    // OPPURE l'analisi pregressa aveva status === 'error' e quindi dobbiamo rifarla.
     if (cachedAnalysis && cachedAnalysis.status === 'error') {
       this.logger.warn(`[Service] Trovata analisi precedente in errore per il commit ${latestCommitId}. Ne avvio una nuova.`);
     }
@@ -49,8 +46,18 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
 
     request.jobId = jobId;
     
-    this.infrastructure.startAnalysis(request).catch(error => {
+    this.infrastructure.startAnalysis(request).catch(async (error) => {
       this.logger.error(`[Service] Fallimento asincrono nell'avvio dell'analisi per ${jobId}: ${error.message}`);
+      
+      // Aggiorna lo stato nel DB così l'utente potrà ritentare
+      await this.database.saveAnalysis({
+        jobId,
+        status: 'error',
+        repoUrl: request.repoUrl,
+        commitId: latestCommitId,
+        error: error.message,
+        date: new Date(),
+      });
     });
 
     // Risponde immediatamente al chiamante evitando il 504

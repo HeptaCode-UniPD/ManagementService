@@ -65,26 +65,33 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
 }
 
   async saveAnalysis(payload: AnalysisResponseDTO): Promise<void> {
-    try {
-      await this.analysisModel.findOneAndUpdate(
-        { commit_id: payload.commitId },
-        {
-          $set: {
-            repository_url: payload.repoUrl,
-            job_id: payload.jobId,
-            status: payload.status,
-            ...(payload.analysisDetails !== undefined && {
-              analysis_data: payload.analysisDetails,
-            }),
-            // AGGIUNGI QUESTA RIGA:
-            ...(payload.error !== undefined && {
-              error_message: payload.error, // Mappa 'error' del DTO su 'error_message' del DB
-            }),
-          },
-          $setOnInsert: { createdAt: new Date() }
-        },
-        { upsert: true }
-      ).exec();
+  try {
+    const updateQuery: any = {
+      $set: {
+        repository_url: payload.repoUrl,
+        job_id: payload.jobId,
+        status: payload.status,
+        ...(payload.analysisDetails !== undefined && {
+          analysis_data: payload.analysisDetails,
+        }),
+      },
+      $setOnInsert: { createdAt: new Date() }
+    };
+
+    // Se c'è un nuovo errore lo settiamo, altrimenti puliamo quello vecchio
+    if (payload.error !== undefined) {
+      updateQuery.$set.error_message = payload.error;
+    } else {
+      updateQuery.$unset = { error_message: "" };
+    }
+
+    await this.analysisModel.findOneAndUpdate(
+      { commit_id: payload.commitId },
+      updateQuery,
+      { upsert: true }
+    ).exec();
+    
+    // ...
 
       this.logger.log(`[Persistence] Analisi salvata correttamente per ${payload.repoUrl}`);
     } catch (error: unknown) {
