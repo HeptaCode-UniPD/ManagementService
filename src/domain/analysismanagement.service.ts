@@ -36,18 +36,18 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
 
   const jobId = randomUUID();
 
-  // Salva (o sovrascrive) il record con status processing
-  await this.database.saveAnalysis({
-    jobId,
-    status: 'processing',
-    repoUrl: request.repoUrl,
-    commitId: latestCommitId,
-    date: new Date(),
-    analysisDetails: [],
-    error: undefined,
-  });
+await this.database.saveAnalysis({
+  jobId,
+  status: 'processing',
+  repoUrl: request.repoUrl,
+  commitId: latestCommitId,
+  date: new Date(),
+  analysisDetails: [],
+  error: undefined,
+});
 
-  request.jobId = jobId;
+request.jobId = jobId;
+request.commitId = latestCommitId; // ← aggiunto: così l'infra non ricalcola
 
   this.infrastructure.startAnalysis(request).catch(async (error) => {
     this.logger.error(`[Service] Fallimento asincrono nell'avvio dell'analisi per ${jobId}: ${error.message}`);

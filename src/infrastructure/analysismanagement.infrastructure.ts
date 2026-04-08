@@ -29,47 +29,25 @@ export class AnalysisManagementInfrastructure extends AnalysisManagementInfrastr
   const apiKey = process.env.MS2_API_KEY;
   const repoUrl = request.repoUrl;
   const jobId = request.jobId;
+  const commitSha = request.commitId; // ← usa quello già calcolato dal service, NON ricalcolarlo
 
-  if (!gatewayUrl) {throw new Error('MS2_GATEWAY_URL non configurato');}
-  if (!apiKey) {throw new Error('MS2_API_KEY non configurato');}
-
-  const commitSha = await this.getLatestCommitSha(repoUrl);
+  if (!gatewayUrl) { throw new Error('MS2_GATEWAY_URL non configurato'); }
+  if (!apiKey) { throw new Error('MS2_API_KEY non configurato'); }
 
   try {
     this.logger.log(`[Infrastructure] Notifico Lambda per l'analisi di: ${repoUrl}`);
 
     await firstValueFrom(
       this.httpService.post(
-        gatewayUrl, 
-        {
-          repoUrl,
-          jobId,
-          commitSha,
-        },
-        {
-          headers: {
-            'x-api-key': apiKey,
-            'Content-Type': 'application/json',
-          },
-        }
+        gatewayUrl,
+        { repoUrl, jobId, commitSha },
+        { headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' } }
       )
     );
 
     this.logger.log(`[Infrastructure] Notifica inviata con successo.`);
-
   } catch (error: unknown) {
-    let errorMessage = 'Errore durante la notifica al gateway';
-
-    if (error instanceof AxiosError) {
-      const status = error.response?.status;
-      errorMessage = error.response?.data?.message || error.message;
-      this.logger.error(`[Infrastructure] Gateway Error [${status}]: ${errorMessage}`);
-    } else if (error instanceof Error) {
-      errorMessage = error.message;
-      this.logger.error(`[Infrastructure] System Error: ${errorMessage}`);
-    }
-
-    throw new Error(`Impossibile avviare l'analisi: ${errorMessage}`);
+    // ... resto invariato
   }
 }
 }
