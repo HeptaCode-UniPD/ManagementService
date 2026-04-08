@@ -26,8 +26,7 @@ describe('GithubAdapter', () => {
 
     adapter = module.get<GithubAdapter>(GithubAdapter);
 
-    // Inietta direttamente il mock: così getOctokit() non chiama mai import()
-    (adapter as any).octokit = mockOctokitInstance;
+    (adapter as unknown as { octokit: typeof mockOctokitInstance }).octokit = mockOctokitInstance;
   });
 
   describe('getLatestCommit', () => {
