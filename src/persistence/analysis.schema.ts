@@ -5,7 +5,7 @@ export const AnalysisSchema = new Schema({
     type: String, 
     required: true, 
     index: true, 
-    unique: true 
+    unique: true // Fondamentale per evitare duplicati
   },
   
   repository_url: { 
