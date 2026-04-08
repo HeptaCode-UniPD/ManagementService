@@ -81,6 +81,7 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
       status: payload.status,
       repository_url: payload.repoUrl,
       commit_id: payload.commitId,
+      job_id: payload.jobId,
       updatedAt: new Date(),
     };
 
