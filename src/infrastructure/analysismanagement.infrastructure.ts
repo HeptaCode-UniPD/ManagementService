@@ -24,31 +24,29 @@ export class AnalysisManagementInfrastructure extends AnalysisManagementInfrastr
   }
 
   async startAnalysis(request: RequestDTO): Promise<void> {
-  const gatewayUrl = process.env.MS2_GATEWAY_URL;
-  const apiKey = process.env.MS2_API_KEY;
-  const repoUrl: string = request.repoUrl ?? '';
-  const jobId: string = request.jobId ?? '';
-  const commitSha: string = request.commitId ?? '';
+    const gatewayUrl = process.env.MS2_GATEWAY_URL;
+    const apiKey = process.env.MS2_API_KEY;
+    const repoUrl: string = request.repoUrl ?? '';
+    const jobId: string = request.jobId ?? '';
+    const commitSha: string = request.commitId ?? '';
 
-  if (!gatewayUrl) { throw new Error('MS2_GATEWAY_URL non configurato'); }
-  if (!apiKey) { throw new Error('MS2_API_KEY non configurato'); }
+    if (!gatewayUrl) { throw new Error('MS2_GATEWAY_URL non configurato'); }
+    if (!apiKey) { throw new Error('MS2_API_KEY non configurato'); }
 
-  try {
-    this.logger.log(`[Infrastructure] Notifico Lambda per l'analisi di: ${repoUrl}`);
-
-    await firstValueFrom(
-      this.httpService.post(
-        gatewayUrl,
-        { repoUrl, jobId, commitSha },
-        { headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' } }
-      )
-    );
-
-    this.logger.log(`[Infrastructure] Notifica inviata con successo.`);
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Errore sconosciuto';
-    this.logger.error(`[Infrastructure] Errore nella notifica Lambda: ${message}`);
-    throw new Error(message);
+    try {
+      this.logger.log(`[Infrastructure] Notifico Lambda per l'analisi di: ${repoUrl}`);
+      await firstValueFrom<unknown>(
+        this.httpService.post(
+          gatewayUrl,
+          { repoUrl, jobId, commitSha },
+          { headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' } }
+        )
+      );
+      this.logger.log(`[Infrastructure] Notifica inviata con successo.`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Errore sconosciuto';
+      this.logger.error(`[Infrastructure] Errore nella notifica Lambda: ${message}`);
+      throw new Error(message);
+    }
   }
-}
 }
