@@ -67,21 +67,28 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
   // src/persistence/analysismanagement.persistence.ts
 
 async saveAnalysis(payload: AnalysisResponseDTO): Promise<void> {
-  const updateData = {
-    job_id: payload.jobId,
+  const updateData: Record<string, any> = {
     status: payload.status,
     repository_url: payload.repoUrl,
-    // Se lo stato è processing, resettiamo esplicitamente errori o dati vecchi
-    ...(payload.status === 'processing' ? { analysis_data: [], error_message: null } : {}),
-    // Se è un errore, aggiorniamo solo il campo messaggio
-    ...(payload.error && { error_message: payload.error }),
-    // Se l'analisi è conclusa, salviamo i dettagli
-    ...(payload.analysisDetails && { analysis_data: payload.analysisDetails }),
+    commit_id: payload.commitId,
     updatedAt: new Date(),
   };
 
+  if (payload.status === 'processing') {
+    updateData.analysis_data = [];
+    updateData.error_message = null;
+  }
+
+  if (payload.error) {
+    updateData.error_message = payload.error;
+  }
+
+  if (payload.analysisDetails && payload.analysisDetails.length > 0) {
+    updateData.analysis_data = payload.analysisDetails;
+  }
+
   await this.analysisModel.findOneAndUpdate(
-    { commit_id: payload.commitId.trim() }, // Identifica univocamente l'analisi
+    { job_id: payload.jobId },   // ← filtra per jobId, non commitId
     { $set: updateData },
     { upsert: true, new: true }
   ).exec();
