@@ -29,20 +29,30 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
       }
     }
 
-    if (cachedAnalysis && cachedAnalysis.status === 'error') {
-      this.logger.warn(`[Service] Trovata analisi precedente in errore per il commit ${latestCommitId}. Ne avvio una nuova.`);
-    }
+    // src/domain/analysismanagement.service.ts
 
-    const jobId = randomUUID();
-    this.logger.log(`[Service] Avvio nuova analisi per il commit ${latestCommitId} con jobId ${jobId}...`);
+// ... logica precedente ...
 
-    await this.database.saveAnalysis({
-      jobId,
-      status: 'processing',
-      repoUrl: request.repoUrl,
-      commitId: latestCommitId,
-      date: new Date(),
-    });
+if (cachedAnalysis && cachedAnalysis.status === 'error') {
+  this.logger.warn(`[Service] Trovata analisi precedente in errore per il commit ${latestCommitId}. Reset e avvio nuova analisi.`);
+  // Opzionale: potresti voler eliminare il vecchio record o 
+  // assicurarti che il saveAnalysis successivo sovrascriva tutto.
+}
+
+const jobId = randomUUID();
+
+// Prepara il payload assicurandoti che i dettagli dell'analisi siano resettati (vuoti)
+await this.database.saveAnalysis({
+  jobId,
+  status: 'processing',
+  repoUrl: request.repoUrl,
+  commitId: latestCommitId,
+  date: new Date(),
+  analysisDetails: [], // <--- IMPORTANTE: Forzare la pulizia dei dettagli precedenti
+  error: undefined     // <--- IMPORTANTE: Rimuovere il vecchio messaggio di errore
+});
+
+// ... resto della funzione ...
 
     request.jobId = jobId;
     
