@@ -18,6 +18,7 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
   async getAnalysisByCommit(commitId: string): Promise<AnalysisResponseDTO | null> {
     const record = await this.analysisModel
       .findOne({ commit_id: commitId })
+      .sort({updatedAt: -1})
       .lean()
       .exec();
 
