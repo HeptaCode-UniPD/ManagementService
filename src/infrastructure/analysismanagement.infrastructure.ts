@@ -49,12 +49,15 @@ export class AnalysisManagementInfrastructure extends AnalysisManagementInfrastr
       this.logger.log(`[Infrastructure] Notifica inviata con successo.`);
     } catch (error: unknown) {
       // FIX: estrae il messaggio upstream da AxiosError (response.data.message)
-      const message =
-        error instanceof AxiosError
-          ? (error.response?.data?.message ?? error.message)
-          : error instanceof Error
-            ? error.message
-            : 'Errore sconosciuto';
+      let message: string;
+      if (error instanceof AxiosError) {
+        const data = error.response?.data as { message?: string } | undefined;
+        message = data?.message ?? error.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      } else {
+        message = 'Errore sconosciuto';
+      }
 
       this.logger.error(`[Infrastructure] Errore nella notifica Lambda: ${message}`);
       throw new Error(`Impossibile avviare l'analisi: ${message}`);
