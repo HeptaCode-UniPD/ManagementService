@@ -4,14 +4,24 @@ import { Model } from 'mongoose';
 import { AnalysisManagementPersistenceInterface } from '../domain/interfaces/analysismanagementpersistence.interface';
 import { AnalysisDetail, AnalysisResponseDTO } from '../domain/dto/analysisresponse.dto';
 
+interface AnalysisDocument {
+  commit_id: string;
+  repository_url: string;
+  job_id: string;
+  status: string;
+  analysis_data?: AnalysisDetail[];
+  createdAt?: Date;
+  updatedAt?: Date; 
+  error_message?: string;
+}
+
 @Injectable()
 export class AnalysisManagementPersistence extends AnalysisManagementPersistenceInterface {
 
   private readonly logger = new Logger(AnalysisManagementPersistence.name);
 
   constructor(
-    @InjectModel('Analysis') private readonly analysisModel: Model<any>,
-  ) {
+    @InjectModel('Analysis') private readonly analysisModel: Model<AnalysisDocument>,  ) {
     super();
   }
 
@@ -66,7 +76,7 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
   }
 
   async saveAnalysis(payload: AnalysisResponseDTO): Promise<void> {
-    const updateData: Record<string, any> = {
+    const updateData: Record<string, unknown> = {
       status: payload.status,
       repository_url: payload.repoUrl,
       commit_id: payload.commitId,

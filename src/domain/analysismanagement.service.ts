@@ -36,23 +36,23 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
 
   const jobId = randomUUID();
 
-await this.database.saveAnalysis({
-  jobId,
-  status: 'processing',
-  repoUrl: request.repoUrl,
-  commitId: latestCommitId,
-  date: new Date(),
-  analysisDetails: [],
-  error: undefined,
-});
+  await this.database.saveAnalysis({
+    jobId,
+    status: 'processing',
+    repoUrl: request.repoUrl,
+    commitId: latestCommitId,
+    date: new Date(),
+    analysisDetails: [],
+    error: undefined,
+  });
 
-request.jobId = jobId;
-request.commitId = latestCommitId; // ← aggiunto: così l'infra non ricalcola
+  request.jobId = jobId;
+  request.commitId = latestCommitId; // ← aggiunto: così l'infra non ricalcola
 
-  this.infrastructure.startAnalysis(request).catch(async (error) => {
-    this.logger.error(`[Service] Fallimento asincrono nell'avvio dell'analisi per ${jobId}: ${error.message}`);
-    // ✅ Aggiorna il record esistente per jobId — NON crea un nuovo record
-    await this.database.updateAnalysisToError(jobId, error.message);
+  this.infrastructure.startAnalysis(request).catch(async (error: unknown) => {
+    const message = error instanceof Error ? error.message : 'Errore sconosciuto';
+    this.logger.error(`[Service] Fallimento asincrono per ${jobId}: ${message}`);
+    await this.database.updateAnalysisToError(jobId, message);
   });
 
   return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId, date: new Date() };

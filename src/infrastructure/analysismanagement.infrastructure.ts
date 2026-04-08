@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { AxiosError } from 'axios';
 import { AnalysisManagementInfrastructureInterface } from '../domain/interfaces/analysismanagementinfrastructure.interface';
 import { GithubAdapter } from './github.adapter';
 import { RequestDTO } from '../domain/dto/request.dto';
@@ -47,7 +46,9 @@ export class AnalysisManagementInfrastructure extends AnalysisManagementInfrastr
 
     this.logger.log(`[Infrastructure] Notifica inviata con successo.`);
   } catch (error: unknown) {
-    // ... resto invariato
+    const message = error instanceof Error ? error.message : 'Errore sconosciuto';
+    this.logger.error(`[Infrastructure] Errore nella notifica Lambda: ${message}`);
+    throw new Error(message);
   }
 }
 }
