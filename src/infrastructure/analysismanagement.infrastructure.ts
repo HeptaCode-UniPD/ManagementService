@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { AxiosError } from 'axios';
 import { AnalysisManagementInfrastructureInterface } from '../domain/interfaces/analysismanagementinfrastructure.interface';
 import { GithubAdapter } from './github.adapter';
 import { RequestDTO } from '../domain/dto/request.dto';
@@ -26,12 +27,15 @@ export class AnalysisManagementInfrastructure extends AnalysisManagementInfrastr
   async startAnalysis(request: RequestDTO): Promise<void> {
     const gatewayUrl = process.env.MS2_GATEWAY_URL;
     const apiKey = process.env.MS2_API_KEY;
+
     const repoUrl: string = request.repoUrl ?? '';
     const jobId: string = request.jobId ?? '';
-    const commitSha: string = request.commitId ?? '';
 
     if (!gatewayUrl) { throw new Error('MS2_GATEWAY_URL non configurato'); }
     if (!apiKey) { throw new Error('MS2_API_KEY non configurato'); }
+
+    // FIX: recupera commitSha da GitHub invece di leggerlo dalla request
+    const commitSha: string = await this.githubAdapter.getLatestCommit(repoUrl);
 
     try {
       this.logger.log(`[Infrastructure] Notifico Lambda per l'analisi di: ${repoUrl}`);
@@ -44,9 +48,16 @@ export class AnalysisManagementInfrastructure extends AnalysisManagementInfrastr
       );
       this.logger.log(`[Infrastructure] Notifica inviata con successo.`);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Errore sconosciuto';
+      // FIX: estrae il messaggio upstream da AxiosError (response.data.message)
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.message ?? error.message)
+          : error instanceof Error
+            ? error.message
+            : 'Errore sconosciuto';
+
       this.logger.error(`[Infrastructure] Errore nella notifica Lambda: ${message}`);
-      throw new Error(message);
+      throw new Error(`Impossibile avviare l'analisi: ${message}`);
     }
   }
 }

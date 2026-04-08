@@ -11,7 +11,7 @@ interface AnalysisDocument {
   status: string;
   analysis_data?: AnalysisDetail[];
   createdAt?: Date;
-  updatedAt?: Date; 
+  updatedAt?: Date;
   error_message?: string;
 }
 
@@ -21,7 +21,8 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
   private readonly logger = new Logger(AnalysisManagementPersistence.name);
 
   constructor(
-    @InjectModel('Analysis') private readonly analysisModel: Model<AnalysisDocument>,  ) {
+    @InjectModel('Analysis') private readonly analysisModel: Model<AnalysisDocument>,
+  ) {
     super();
   }
 
@@ -83,27 +84,27 @@ export class AnalysisManagementPersistence extends AnalysisManagementPersistence
       updatedAt: new Date(),
     };
 
+    // FIX: rimosso analysis_data: [] dal blocco processing — non va incluso se analysisDetails è assente
     if (payload.status === 'processing') {
-      updateData.analysis_data = [];
       updateData.error_message = null;
     }
 
     if (payload.status === 'error') {
-      // Salva sempre error_message quando lo status è error,
-      // anche se payload.error è undefined, per non lasciare il campo sporco
       updateData.error_message = payload.error ?? null;
     } else if (payload.error) {
       updateData.error_message = payload.error;
     }
 
+    // FIX: analysis_data incluso solo se analysisDetails è presente e non vuoto
     if (payload.analysisDetails && payload.analysisDetails.length > 0) {
       updateData.analysis_data = payload.analysisDetails;
     }
 
+    // FIX: filtro su commit_id invece di job_id; rimosso new: true
     await this.analysisModel.findOneAndUpdate(
-      { job_id: payload.jobId },
+      { commit_id: payload.commitId },
       { $set: updateData },
-      { upsert: true, new: true }
+      { upsert: true }
     ).exec();
   }
 

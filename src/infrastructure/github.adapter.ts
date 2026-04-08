@@ -6,13 +6,13 @@ export class GithubAdapter {
   private octokit!: Octokit;
 
   private async getOctokit(): Promise<Octokit> {
-  if (!this.octokit) {
-    const { Octokit } = await import('@octokit/rest');
-    this.octokit = new Octokit({
-      auth: process.env.GITHUB_TOKEN,
-    });
-  }
-  return this.octokit;
+    if (!this.octokit) {
+      const { Octokit } = await import('@octokit/rest');
+      this.octokit = new Octokit({
+        auth: process.env.GITHUB_TOKEN,
+      });
+    }
+    return this.octokit;
   }
 
   async getLatestCommit(repoUrl: string): Promise<string> {
@@ -47,7 +47,13 @@ export class GithubAdapter {
     if (error instanceof HttpException) {
       throw error;
     }
-    const message = error instanceof Error ? error.message : 'Unknown GitHub error';
+
+    // FIX: i plain object da Octokit (es. { message, status }) non sono instanceof Error,
+    const message =
+      error instanceof Error
+        ? error.message
+        : (error as { message?: string }).message ?? 'Unknown GitHub error';
+
     const status = (error as { status?: number }).status ?? HttpStatus.BAD_GATEWAY;
     console.error(`[GithubAdapter] Error: ${message}`);
     throw new HttpException(`GitHub API Error: ${message}`, status);
