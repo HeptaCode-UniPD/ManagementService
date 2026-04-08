@@ -127,4 +127,11 @@ async saveAnalysis(payload: AnalysisResponseDTO): Promise<void> {
     throw error;
   }
 }
+async updateAnalysisToError(jobId: string, errorMessage: string): Promise<void> {
+  await this.analysisModel.findOneAndUpdate(
+    { job_id: jobId },
+    { $set: { status: 'error', error_message: errorMessage, updatedAt: new Date() } },
+    { new: true }  // niente upsert: deve trovare il record esistente
+  ).exec();
+}
 }
