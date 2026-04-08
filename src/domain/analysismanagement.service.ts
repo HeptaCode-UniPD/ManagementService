@@ -19,14 +19,21 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
     const latestCommitId = await this.infrastructure.getLatestCommitSha(request.repoUrl);
     const cachedAnalysis = await this.database.getAnalysisByCommit(latestCommitId);
 
-    if (cachedAnalysis && cachedAnalysis.analysisDetails && cachedAnalysis.analysisDetails.length > 0 && cachedAnalysis.status === 'error') {
-      this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già presente.`);
-      return { status: 'done', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: cachedAnalysis.jobId , date: new Date()};
+    // Se esiste un'analisi precedente e NON è in errore, verifichiamo se è completata o in corso
+    if (cachedAnalysis && cachedAnalysis.status !== 'error') {
+      if (cachedAnalysis.analysisDetails && cachedAnalysis.analysisDetails.length > 0) {
+        this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già presente e completata.`);
+        return { status: 'done', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: cachedAnalysis.jobId, date: new Date() };
+      } else {
+        this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già in corso.`);
+        return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: cachedAnalysis.jobId, date: new Date() };
+      }
     }
 
-    if (cachedAnalysis) {
-      this.logger.log(`[Service] Analisi per il commit ${latestCommitId} già in corso.`);
-      return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId: cachedAnalysis.jobId, date: new Date()};
+    // Se arriviamo qui, significa che non c'è nessuna analisi pregressa, 
+    // OPPURE l'analisi pregressa aveva status === 'error' e quindi dobbiamo rifarla.
+    if (cachedAnalysis && cachedAnalysis.status === 'error') {
+      this.logger.warn(`[Service] Trovata analisi precedente in errore per il commit ${latestCommitId}. Ne avvio una nuova.`);
     }
 
     const jobId = randomUUID();
@@ -44,11 +51,10 @@ export class AnalysisManagementService implements AnalysisManagementServiceInter
     
     this.infrastructure.startAnalysis(request).catch(error => {
       this.logger.error(`[Service] Fallimento asincrono nell'avvio dell'analisi per ${jobId}: ${error.message}`);
-      
     });
 
     // Risponde immediatamente al chiamante evitando il 504
-    return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId , date: new Date(),};
+    return { status: 'processing', repoUrl: request.repoUrl, commitId: latestCommitId, jobId, date: new Date() };
   }
 
   async handleWebhookResponse(payload: AnalysisResponseDTO): Promise<void> {
