@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AnalysisManagementService } from './domain/analysismanagement.service';
 import { AnalysisManagementPersistence } from './persistence/analysismanagement.persistence';
@@ -16,6 +17,9 @@ import { HttpModule } from '@nestjs/axios';
 @Module({
   imports: [
     HttpModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     MongooseModule.forRoot(process.env.MONGO_URI!, {
       connectionFactory: (connection) => {
         console.log('MongoDB Connected to:', connection.name);
