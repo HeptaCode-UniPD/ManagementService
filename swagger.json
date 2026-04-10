@@ -1,0 +1,270 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/analysis/request": {
+      "post": {
+        "operationId": "AnalysisManagementPresentation_requestAnalysis",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Analysis request started successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Request a new repository analysis",
+        "tags": [
+          "Analysis"
+        ]
+      }
+    },
+    "/analysis/status/{jobId}": {
+      "get": {
+        "operationId": "AnalysisManagementPresentation_getStatus",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "description": "The unique ID of the analysis job",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get the status of an analysis job",
+        "tags": [
+          "Analysis"
+        ]
+      }
+    },
+    "/analysis/view": {
+      "get": {
+        "operationId": "AnalysisManagementPresentation_viewLastAnalysis",
+        "parameters": [
+          {
+            "name": "url",
+            "required": true,
+            "in": "query",
+            "description": "The absolute URL of the repository",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Latest analysis retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "summary": "View the last analysis for a repository",
+        "tags": [
+          "Analysis"
+        ]
+      }
+    },
+    "/analysis/webhook": {
+      "post": {
+        "operationId": "AnalysisManagementPresentation_handleWebhook",
+        "parameters": [
+          {
+            "name": "x-ms1-key",
+            "in": "header",
+            "description": "Security key for authentication",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisResponseDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook processed successfully"
+          },
+          "401": {
+            "description": "Unauthorized - invalid API key"
+          }
+        },
+        "summary": "Webhook for receiving analysis results",
+        "tags": [
+          "Analysis"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Analysis Management Service API",
+    "description": "Analysis and remediation of repositories",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "RequestDTO": {
+        "type": "object",
+        "properties": {
+          "repoUrl": {
+            "type": "string",
+            "description": "The URL of the GitHub repository to analyze",
+            "example": "https://github.com/user/repo"
+          },
+          "jobId": {
+            "type": "string",
+            "description": "The job ID for the analysis task",
+            "example": "job-12345"
+          },
+          "commitId": {
+            "type": "object",
+            "description": "The specific commit ID to analyze",
+            "example": "a1b2c3d4"
+          }
+        },
+        "required": [
+          "repoUrl"
+        ]
+      },
+      "AnalysisDetail": {
+        "type": "object",
+        "properties": {
+          "agentName": {
+            "type": "string",
+            "description": "Name of the analysis agent",
+            "example": "CodeQualityAgent"
+          },
+          "summary": {
+            "type": "string",
+            "description": "Short summary of the analysis",
+            "example": "Potential security vulnerability found"
+          },
+          "report": {
+            "type": "string",
+            "description": "Full report from the agent",
+            "example": "Detailed analysis of the code..."
+          }
+        },
+        "required": [
+          "agentName",
+          "summary",
+          "report"
+        ]
+      },
+      "AnalysisResponseDTO": {
+        "type": "object",
+        "properties": {
+          "analysisDetails": {
+            "description": "List of detailed analysis from different agents",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalysisDetail"
+            }
+          },
+          "repoUrl": {
+            "type": "string",
+            "description": "The repository URL analyzed",
+            "example": "https://github.com/user/repo"
+          },
+          "commitId": {
+            "type": "string",
+            "description": "The specific commit ID analyzed",
+            "example": "a1b2c3d4e5f6"
+          },
+          "jobId": {
+            "type": "string",
+            "description": "The unique job ID for this analysis",
+            "example": "job-789"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "done",
+              "processing",
+              "error"
+            ],
+            "description": "Current status of the analysis"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message if status is error",
+            "example": "Failed to clone repository"
+          },
+          "scores": {
+            "description": "Scoring results",
+            "example": [
+              85,
+              90,
+              78
+            ],
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "date": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Date and time of the analysis",
+            "example": "2024-03-20T10:00:00Z"
+          },
+          "isLatest": {
+            "type": "boolean",
+            "description": "Whether this is the latest analysis for the repository",
+            "example": true
+          }
+        },
+        "required": [
+          "analysisDetails",
+          "repoUrl",
+          "commitId",
+          "jobId",
+          "status",
+          "date"
+        ]
+      }
+    }
+  }
+}
